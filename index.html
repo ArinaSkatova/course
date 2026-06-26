@@ -1,0 +1,2912 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>AI Course Builder Workstation</title>
+<script src="https://js.puter.com/v2/"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://unpkg.com/docx@8.5.0/build/index.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+<style>
+:root{
+  --bg:#ffffff;
+  --panel:#ffffff;
+  --panel2:#f6f8fa;
+  --panel3:#eaeef2;
+  --border:#d0d7de;
+  --border-strong:#afb8c1;
+  --text:#1f2328;
+  --text-muted:#656d76;
+  --muted:#656d76;
+  --accent:#0969da;
+  --accent-hover:#0550ae;
+  --accent2:#1a7f37;
+  --warn:#cf222e;
+  --gold:#9a6700;
+  --npa:#8250df;
+  --sort:#0550ae;
+  --law:#bc4c00;
+  --ai:#bf3989;
+  --course:#1a7f37;
+  --shadow:0 1px 3px rgba(31,35,40,0.08), 0 1px 2px rgba(31,35,40,0.04);
+  --shadow-lg:0 8px 24px rgba(31,35,40,0.12);
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans',Helvetica,Arial,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;line-height:1.5}
+header{padding:24px 32px;border-bottom:1px solid var(--border);background:var(--panel);box-shadow:var(--shadow)}
+header h1{margin:0;font-size:24px;font-weight:600;color:var(--text)}
+header .sub{color:var(--muted);font-size:13px;margin-top:4px}
+.ai-status-bar{margin-top:10px;padding:8px 14px;border-radius:6px;font-size:13px;display:inline-flex;gap:10px;align-items:center}
+.ai-status-bar.ok{background:#dafbe1;border:1px solid #4ac26b;color:#116329}
+.ai-status-bar.warn{background:#fff8c5;border:1px solid #d4a72c;color:#57430b}
+.ai-status-bar.err{background:#ffebe9;border:1px solid #ff8182;color:#82071e}
+.stats{display:flex;gap:10px;margin-top:14px;font-size:13px;flex-wrap:wrap}
+.stats span{background:var(--panel2);padding:6px 12px;border-radius:6px;border:1px solid var(--border);color:var(--text)}
+.stats b{color:var(--accent2);font-weight:600}
+.stats .npa-stat b{color:var(--npa)}
+.stats .sort-stat b{color:var(--sort)}
+.stats .law-stat b{color:var(--law)}
+.stats .ai-stat b{color:var(--ai)}
+.stats .course-stat b{color:var(--course)}
+.pipeline{display:flex;gap:8px;padding:20px 32px;overflow-x:auto;border-bottom:1px solid var(--border);background:var(--panel2)}
+.step{flex:1;min-width:130px;padding:14px;border-radius:8px;background:var(--panel);border:1px solid var(--border);position:relative;box-shadow:var(--shadow)}
+.step .num{position:absolute;top:-10px;left:12px;background:var(--accent);color:#fff;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+.step .title{margin-top:8px;font-size:13px;font-weight:600;color:var(--text)}
+.step.active{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+.step.done{border-color:var(--accent2)}
+.step.done .num{background:var(--accent2)}
+main{padding:32px;display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:1400px;margin:0 auto}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:20px;box-shadow:var(--shadow)}
+.card h2{margin:0 0 6px;font-size:17px;font-weight:600;color:var(--text)}
+.card .desc{color:var(--muted);font-size:13px;margin-bottom:16px;line-height:1.5}
+.card.full{grid-column:1/-1}
+.drop{border:2px dashed var(--border-strong);border-radius:8px;padding:28px;text-align:center;cursor:pointer;transition:.15s;background:var(--panel2);color:var(--text);display:block}
+.drop:hover,.drop.over{border-color:var(--accent);background:#ddf4ff}
+.drop.loaded{border-color:var(--accent2);background:#dafbe1}
+.drop.law-drop{border-color:var(--law)}
+.drop.law-drop:hover{border-color:var(--law);background:#fff1e5}
+.drop small{color:var(--muted);display:block;margin-top:6px}
+label{display:block;font-size:12px;color:var(--muted);margin:12px 0 6px;text-transform:uppercase;letter-spacing:.5px;font-weight:600}
+select,input[type=range],input[type=text],input[type=number],textarea{width:100%;padding:8px;background:var(--panel);color:var(--text);border:1px solid var(--border);border-radius:6px;font-family:inherit;font-size:14px}
+select:focus,input:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(9,105,218,0.2)}
+textarea{min-height:80px;resize:vertical;font-family:'Consolas',monospace;font-size:12px}
+input[type=file]{display:none}
+button{background:var(--accent);color:#fff;border:1px solid rgba(27,31,36,0.15);padding:8px 16px;border-radius:6px;font-weight:600;cursor:pointer;font-size:14px;transition:.15s;box-shadow:var(--shadow)}
+button:hover:not(:disabled){background:var(--accent-hover)}
+button:disabled{opacity:.5;cursor:not-allowed}
+button.ghost{background:var(--panel);border:1px solid var(--border);color:var(--text);box-shadow:none}
+button.ghost:hover:not(:disabled){background:var(--panel2);border-color:var(--border-strong)}
+button.danger{background:var(--warn);color:#fff}
+button.danger:hover:not(:disabled){background:#a40e26}
+button.success{background:var(--accent2);color:#fff}
+button.success:hover:not(:disabled){background:#116329}
+button.npa-btn{background:var(--npa);color:#fff}
+button.npa-btn:hover:not(:disabled){background:#6639ba}
+button.sort-btn{background:var(--sort);color:#fff}
+button.sort-btn:hover:not(:disabled){background:#033d8b}
+button.law-btn{background:var(--law);color:#fff}
+button.law-btn:hover:not(:disabled){background:#953800}
+button.ai-btn{background:var(--ai);color:#fff}
+button.ai-btn:hover:not(:disabled){background:#99286e}
+button.course-btn{background:var(--course);color:#fff}
+button.course-btn:hover:not(:disabled){background:#116329}
+button.sm{padding:5px 10px;font-size:12px}
+button.xs{padding:3px 8px;font-size:11px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.status{margin-top:12px;padding:10px 12px;border-radius:6px;font-size:13px;background:var(--panel2);border:1px solid var(--border);border-left:4px solid var(--accent);color:var(--text)}
+.status.ok{border-left-color:var(--accent2);background:#dafbe1;color:#116329}
+.status.err{border-left-color:var(--warn);background:#ffebe9;color:#82071e}
+.status.warn{border-left-color:var(--gold);background:#fff8c5;color:#57430b}
+.status.ai{border-left-color:var(--ai);background:#ffeff7;color:#82071e}
+.threshold-row{display:flex;align-items:center;gap:12px;margin:12px 0}
+.threshold-row input{flex:1}
+.threshold-val{background:var(--accent);color:#fff;padding:4px 10px;border-radius:6px;font-weight:700;min-width:50px;text-align:center}
+table{width:100%;border-collapse:collapse;font-size:13px;margin-top:12px}
+th,td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--border);vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.5px;background:var(--panel2)}
+tr:hover td{background:var(--panel2)}
+.score{display:inline-block;padding:2px 8px;border-radius:12px;font-weight:700;font-size:12px}
+.score.hi{background:#dafbe1;color:#116329}
+.score.md{background:#fff8c5;color:#57430b}
+.score.lo{background:#ffebe9;color:#82071e}
+.badge{display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;background:var(--panel2);border:1px solid var(--border);margin-left:6px;font-weight:600}
+.badge.busy{background:#ffebe9;border-color:#ff8182;color:#82071e}
+.badge.free{background:#dafbe1;border-color:#4ac26b;color:#116329}
+.badge.npa{background:#fbefff;border-color:#c297e8;color:#5716b2}
+.badge.sort{background:#ddf4ff;border-color:#54aeff;color:#0550ae}
+.badge.law{background:#fff1e5;border-color:#ffa657;color:#7d4000}
+.badge.ai{background:#ffeff7;border-color:#ff8cc8;color:#82071e}
+.badge.course{background:#dafbe1;border-color:#4ac26b;color:#116329}
+.reset-bar{padding:16px 32px;border-top:1px solid var(--border);background:var(--panel2);text-align:center}
+.loader{display:inline-block;width:14px;height:14px;border:2px solid var(--accent);border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite;vertical-align:middle;margin-right:8px}
+.loader.ai{border-color:var(--ai);border-top-color:transparent}
+.loader.course{border-color:var(--course);border-top-color:transparent}
+@keyframes spin{to{transform:rotate(360deg)}}
+.npa-cell{font-family:'Consolas',monospace;font-size:12px;color:var(--npa);font-weight:600;background:#fbefff;padding:6px 10px;border-radius:6px;display:inline-block;max-width:100%;word-break:break-word;border:1px solid #e6ddfb}
+.npa-cell.empty{color:var(--muted);font-style:italic;font-weight:400;background:var(--panel2);border:1px solid var(--border)}
+.q-num{display:inline-block;background:var(--accent);color:#fff;padding:2px 10px;border-radius:12px;font-weight:700;font-size:12px;min-width:40px;text-align:center}
+.point-num{display:inline-block;background:var(--sort);color:#fff;padding:2px 8px;border-radius:12px;font-weight:700;font-size:11px;min-width:30px;text-align:center;margin-right:6px}
+.npa-summary{display:flex;gap:12px;margin:12px 0;flex-wrap:wrap}
+.npa-summary .stat{background:var(--panel2);padding:8px 14px;border-radius:8px;border:1px solid var(--border);font-size:13px;color:var(--text)}
+.npa-summary .stat b{color:var(--npa);font-weight:600}
+.npa-toolbar{display:flex;gap:10px;align-items:center;margin:12px 0;flex-wrap:wrap}
+.debug-box{background:#f6f8fa;border:1px dashed var(--border-strong);border-radius:8px;padding:12px;margin-top:12px;font-family:'Consolas',monospace;font-size:12px;color:var(--text);max-height:500px;overflow-y:auto}
+.debug-box b{color:var(--gold)}
+.debug-box .hit{color:var(--accent2)}
+.debug-box .miss{color:var(--warn)}
+.debug-box .block-item{padding:8px 10px;margin:6px 0;background:var(--panel);border-left:3px solid var(--border);border-radius:4px;word-break:break-word;cursor:pointer;transition:.15s;box-shadow:var(--shadow)}
+.debug-box .block-item:hover{background:#ddf4ff;border-left-color:var(--accent)}
+.debug-box .block-item.is-npa{border-left-color:var(--npa);background:#fbefff}
+.debug-box .idx{color:var(--muted);font-size:10px;margin-right:6px}
+.debug-box .tag{display:inline-block;padding:2px 8px;border-radius:12px;font-size:10px;margin-right:8px;font-weight:700}
+.debug-box .tag.q{background:#ddf4ff;color:#0550ae}
+.debug-box .tag.npa{background:#fbefff;color:#5716b2}
+.debug-box .tag.ans{background:#fff8c5;color:#57430b}
+.debug-box .tag.other{background:var(--panel2);color:var(--muted);border:1px solid var(--border)}
+.npa-registry-item{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:12px;margin:8px 0;box-shadow:var(--shadow)}
+.npa-registry-item .short-name{color:var(--npa);font-weight:700;font-family:'Consolas',monospace;font-size:13px;margin-bottom:6px;word-break:break-word}
+.npa-registry-item .count{color:var(--muted);font-size:11px;margin-top:4px}
+.npa-registry-item .example{color:var(--muted);font-size:11px;font-style:italic;margin-top:4px;padding:6px 10px;background:var(--panel2);border-radius:6px;word-break:break-word;border:1px solid var(--border)}
+.npa-registry-item .preview{color:var(--accent2);font-size:11px;margin-top:6px;padding:6px 10px;background:#dafbe1;border-left:3px solid var(--accent2);border-radius:6px;word-break:break-word}
+.npa-registry-item input{font-size:12px;margin-top:6px}
+.npa-registry-item .saved{color:var(--accent2);font-size:11px;margin-left:8px;font-weight:600}
+.hint-box{background:#fff8c5;border:1px solid #d4a72c;border-radius:8px;padding:10px 14px;margin:10px 0;font-size:13px;color:#57430b}
+.hint-box b{color:#57430b}
+.hint-box code{background:var(--panel);padding:2px 6px;border-radius:4px;font-family:'Consolas',monospace;color:var(--npa);border:1px solid var(--border)}
+.hint-box.ai{background:#ffeff7;border-color:#ff8cc8;color:#82071e}
+.hint-box.ai b{color:#82071e}
+.hint-box.course{background:#dafbe1;border-color:#4ac26b;color:#116329}
+.hint-box.course b{color:#116329}
+.export-status{margin-top:12px;padding:10px;border-radius:8px;font-size:13px;background:var(--panel2);border:1px solid var(--border);border-left:4px solid var(--accent)}
+.export-status.ok{border-left-color:var(--accent2);background:#dafbe1;color:#116329}
+.export-status.err{border-left-color:var(--warn);background:#ffebe9;color:#82071e}
+.export-status.ai{border-left-color:var(--ai);background:#ffeff7;color:#82071e}
+.npa-group{background:var(--panel);border:1px solid var(--border);border-radius:10px;margin:14px 0;overflow:hidden;box-shadow:var(--shadow)}
+.npa-group-header{background:linear-gradient(90deg,#ddf4ff,var(--panel));padding:14px 18px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+.npa-group-title{color:var(--sort);font-weight:700;font-size:14px;font-family:'Consolas',monospace;word-break:break-word;flex:1}
+.npa-group-count{background:var(--sort);color:#fff;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:700}
+.npa-group-actions{display:flex;gap:8px;align-items:center;padding:10px 18px;background:var(--panel2);border-bottom:1px solid var(--border);flex-wrap:wrap}
+.npa-question{padding:12px 18px;border-bottom:1px solid var(--border)}
+.npa-question:last-child{border-bottom:none}
+.npa-question:hover{background:var(--panel2)}
+.npa-question-grid{display:grid;grid-template-columns:60px 1fr;gap:14px;align-items:start}
+.npa-question .q-meta{display:flex;flex-direction:column;gap:6px;align-items:center}
+.npa-question .q-text{font-size:13px;line-height:1.5;color:var(--text)}
+.npa-question .q-just{margin-top:6px;font-size:12px;color:var(--npa);font-family:'Consolas',monospace;padding:6px 10px;background:#fbefff;border:1px solid #e6ddfb;border-radius:6px;word-break:break-word}
+.npa-question .q-just b{color:var(--sort)}
+.npa-question .q-law-text{margin-top:8px;font-size:12px;line-height:1.6;color:var(--text);padding:10px 12px;background:#fff1e5;border-left:3px solid var(--law);border-radius:6px;white-space:pre-wrap;word-break:break-word;font-family:'Consolas',monospace}
+.npa-question .q-law-text.ai-found{background:#ffeff7;border-left-color:var(--ai)}
+.npa-question .q-law-text.manual{background:#dafbe1;border-left-color:var(--accent2)}
+.npa-question .q-law-text.missing{color:var(--warn);background:#ffebe9;border-left-color:var(--warn);font-style:italic}
+.npa-question .q-law-text .law-label{display:inline-block;padding:1px 8px;border-radius:4px;font-size:10px;font-weight:700;margin-bottom:6px;font-family:'Segoe UI',sans-serif;color:#fff}
+.npa-question .q-law-text .law-label.parser{background:var(--law)}
+.npa-question .q-law-text .law-label.ai{background:var(--ai)}
+.npa-question .q-law-text .law-label.manual{background:var(--accent2)}
+.q-actions{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.source-badge{display:inline-block;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:700;margin-left:6px}
+.source-badge.parser{background:#fff1e5;color:#7d4000;border:1px solid #ffa657}
+.source-badge.ai{background:#ffeff7;color:#82071e;border:1px solid #ff8cc8}
+.source-badge.manual{background:#dafbe1;color:#116329;border:1px solid #4ac26b}
+.source-badge.notfound{background:#ffebe9;color:#82071e;border:1px solid #ff8182}
+.law-status{font-size:11px;padding:4px 10px;border-radius:6px;background:var(--panel);border:1px solid var(--border);color:var(--muted)}
+.law-status.loaded{background:#fff1e5;border-color:var(--law);color:#7d4000}
+.law-status.loaded b{color:#7d4000}
+.ai-progress{margin-top:10px;padding:10px;background:var(--panel2);border-radius:6px;font-size:12px;display:none;border:1px solid var(--border)}
+.ai-progress.active{display:block}
+.ai-progress-bar{height:6px;background:var(--panel3);border-radius:3px;overflow:hidden;margin-top:6px}
+.ai-progress-fill{height:100%;background:linear-gradient(90deg,var(--ai),var(--npa));transition:width .3s;width:0%}
+.ai-progress-fill.course{background:linear-gradient(90deg,var(--course),var(--accent2))}
+.manual-input-area{margin-top:8px;display:none}
+.manual-input-area.active{display:block}
+.ai-model-selector{display:flex;gap:10px;align-items:center;margin:12px 0;flex-wrap:wrap;padding:12px;background:#ffeff7;border:1px solid #ff8cc8;border-radius:8px}
+.ai-model-selector label{margin:0;text-transform:none;color:var(--text);font-size:13px}
+.ai-model-selector select{width:auto;min-width:200px}
+.law-input-tabs{display:flex;gap:4px;margin:10px 0}
+.law-input-tabs button{flex:1;padding:8px;font-size:12px}
+.law-input-tabs button.active{background:var(--law);color:#fff}
+.law-input-pane{display:none}
+.law-input-pane.active{display:block}
+
+/* Стили для курса */
+.course-output{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:20px;max-height:700px;overflow-y:auto;font-family:'Consolas',monospace;font-size:13px;line-height:1.7;white-space:pre-wrap;word-break:break-word;box-shadow:var(--shadow)}
+.course-output h1,.course-output h2,.course-output h3{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;margin:20px 0 10px}
+.course-module{background:#dafbe1;border:1px solid #4ac26b;border-radius:8px;padding:16px;margin:16px 0}
+.course-slide{background:#fbefff;border:1px solid #c297e8;border-radius:8px;padding:14px;margin:12px 0}
+.course-slide-title{color:var(--npa);font-weight:700;font-size:14px;margin-bottom:8px}
+.course-slide-meta{color:var(--sort);font-size:12px;font-weight:600;margin-bottom:6px}
+.course-slide-question{background:#ddf4ff;padding:10px;border-radius:6px;margin:8px 0;font-size:13px;color:var(--text)}
+.course-slide-npa{background:#fff1e5;border-left:3px solid var(--law);padding:10px;border-radius:4px;margin:8px 0;font-size:12px;line-height:1.6;white-space:pre-wrap;font-family:'Consolas',monospace}
+.course-docs-selector{max-height:250px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;padding:10px;background:var(--panel2);margin-bottom:10px}
+.course-doc-item{display:flex;align-items:start;gap:8px;padding:8px;cursor:pointer;border-radius:4px;transition:.15s}
+.course-doc-item:hover{background:var(--panel)}
+.course-doc-item.disabled{opacity:.5;cursor:not-allowed}
+.course-doc-name{font-size:12px;font-weight:600;color:var(--text);word-break:break-word;flex:1}
+.course-doc-meta{font-size:11px;color:var(--muted);margin-top:2px}
+.course-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin:14px 0}
+.course-stat-card{background:var(--panel2);padding:12px;border-radius:8px;border:1px solid var(--border);text-align:center}
+.course-stat-card .num{font-size:24px;font-weight:700;color:var(--course);display:block}
+.course-stat-card .label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+details{margin-top:12px;background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:10px}
+details summary{cursor:pointer;font-size:13px;color:var(--muted);user-select:none}
+details[open] summary{margin-bottom:10px;color:var(--text)}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🧠 AI Course Builder Workstation</h1>
+  <div class="sub">Методическая среда разработки · Пайплайн создания учебного курса</div>
+  
+  <div id="aiStatusBar" class="ai-status-bar warn">
+    <span class="loader ai"></span>
+    <span id="aiStatusText">Проверка подключения к ИИ...</span>
+  </div>
+  
+  <div class="stats">
+    <span>Вопросов Excel: <b id="stQ">0</b></span>
+    <span>Блоков Word: <b id="stW">0</b></span>
+    <span>Групп: <b id="stGroups">0</b></span>
+    <span>Связей: <b id="stM">0</b></span>
+    <span class="npa-stat">Найдено НПА: <b id="stNpa">0</b></span>
+    <span class="npa-stat">Уникальных НПА: <b id="stUniqueNpa">0</b></span>
+    <span class="npa-stat">Заполнено реестра: <b id="stRegistryFilled">0</b></span>
+    <span class="sort-stat">Сгруппировано по НПА: <b id="stSorted">0</b></span>
+    <span class="law-stat">Загружено законов: <b id="stLaws">0</b></span>
+    <span class="ai-stat">Найдено ИИ: <b id="stAiFound">0</b></span>
+    <span class="course-stat">Слайдов курса: <b id="stCourseSlides">0</b></span>
+  </div>
+</header>
+
+<nav class="pipeline">
+  <div class="step active"><div class="num">1</div><div class="title">Импорт Excel</div></div>
+  <div class="step"><div class="num">2</div><div class="title">Склейка (Word)</div></div>
+  <div class="step"><div class="num">3</div><div class="title">Реестр НПА</div></div>
+  <div class="step"><div class="num">4</div><div class="title">Сортировка по НПА</div></div>
+  <div class="step"><div class="num">5</div><div class="title">Тексты законов</div></div>
+  <div class="step"><div class="num">6</div><div class="title">ИИ + Экспорт</div></div>
+  <div class="step"><div class="num">7</div><div class="title">🎓 Обучающий курс</div></div>
+</nav>
+
+<main>
+
+  <section class="card">
+    <h2>1. Загрузка Excel</h2>
+    <p class="desc">Реестр вопросов. Нумерация со 2-й строки (первый вопрос = №2). Правильные ответы отмечены <code>*</code>.</p>
+    <label for="excelFile" class="drop" id="excelDrop">
+      📊 Нажмите для выбора файла (.xlsx)<br>
+      <small id="excelName">Данные не загружены</small>
+    </label>
+    <input type="file" id="excelFile" accept=".xlsx,.xls">
+    <label>Колонка с текстом вопроса:</label>
+    <select id="colSelect" disabled><option>— загрузите файл —</option></select>
+    <div id="excelStatus" class="status" style="display:none"></div>
+  </section>
+
+  <section class="card">
+    <h2>2. Мэппинг НПА</h2>
+    <p class="desc">Связываем Excel со Word. Один блок Word = один вопрос Excel.</p>
+
+    <label for="wordFile" class="drop" id="wordDrop">
+      📄 Загрузить Word (.docx)<br>
+      <small id="wordName">Файл не выбран</small>
+    </label>
+    <input type="file" id="wordFile" accept=".docx">
+
+    <label>Порог точности совпадения:</label>
+    <div class="threshold-row">
+      <input type="range" id="threshold" min="30" max="95" value="60">
+      <div class="threshold-val" id="thresholdVal">60%</div>
+    </div>
+
+    <div class="row" style="margin-top:14px">
+      <button id="runMapping" disabled>🚀 ЗАПУСТИТЬ ИИ-МЭППИНГ</button>
+      <span id="mappingLoader" style="display:none"><span class="loader"></span>ИИ анализирует...</span>
+    </div>
+
+    <div id="mappingStatus" class="status" style="display:none"></div>
+  </section>
+
+  <section class="card full" id="wordDebugCard" style="display:none">
+    <h2>🔬 Диагностика Word</h2>
+    <p class="desc">Кликните на блок, чтобы назначить его как НПА вручную.</p>
+    <div class="row" style="margin:12px 0">
+      <button class="ghost" id="showFirst30">📋 Первые 30 блоков</button>
+      <button class="ghost" id="showAllBlocks">📄 Все блоки</button>
+      <button class="ghost" id="showOnlyMissed">⚠ Только без НПА</button>
+    </div>
+    <div id="debugBox" class="debug-box"></div>
+  </section>
+
+  <section class="card full" id="resultsCard" style="display:none">
+    <h2>📋 Результаты мэппинга</h2>
+    <div class="row" style="margin:12px 0">
+      <button class="ghost" id="filterNoNpa">⚠ Только без НПА</button>
+      <button class="ghost" id="filterAll">📄 Все</button>
+    </div>
+    <div style="overflow-x:auto;max-height:600px;overflow-y:auto">
+      <table id="resultsTable">
+        <thead><tr><th>№</th><th>Вопрос Excel</th><th>Блок Word</th><th>%</th><th>Обоснование</th><th>Статус</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card full" id="npaRegistryCard" style="display:none">
+    <h2>📚 Реестр уникальных НПА <span class="badge npa">заполните полные наименования</span></h2>
+    
+    <div class="hint-box">
+      <b>⚠ Важно:</b> Полное наименование НПА нужно вводить <b>в родительном падеже</b>.
+      <br>Пример: для <code>п. 553 Приказа Ростехнадзора...</code> введите <code>Приказа Ростехнадзора от 03.12.2020 № 494 «Об утверждении Правил безопасности...»</code>
+    </div>
+
+    <div class="npa-summary">
+      <div class="stat">Уникальных НПА: <b id="regTotal">0</b></div>
+      <div class="stat">Заполнено: <b id="regFilled">0</b></div>
+      <div class="stat">Не заполнено: <b id="regEmpty" style="color:var(--warn)">0</b></div>
+    </div>
+
+    <div class="npa-toolbar">
+      <button class="ghost" id="copyNpaRegistry">📋 Копировать реестр</button>
+      <button class="npa-btn" id="exportNpaRegistryCsv">⬇ Экспорт реестра CSV</button>
+      <button class="ghost" id="showOnlyEmpty">⚠ Только незаполненные</button>
+      <button class="ghost" id="showAllRegistry">📄 Все</button>
+    </div>
+
+    <div id="npaRegistryList"></div>
+  </section>
+
+  <section class="card full" id="sortCard" style="display:none">
+    <h2>🗂 Сортировка вопросов по НПА и пунктам <span class="badge sort">авто-группировка</span></h2>
+    <p class="desc">Все вопросы сгруппированы по документам и отсортированы по возрастанию номеров пунктов.</p>
+
+    <div class="hint-box ai">
+      <b>✨ ИИ подключён бесплатно!</b>
+      <br>• Если regex-парсер не нашёл пункт — нажмите <b>«🤖 ИИ»</b>, и ИИ найдёт точный текст
+      <br>• <b>Важно:</b> ИИ не умеет переходить по ссылкам — ему нужен текст закона (файл или вставленный текст)
+      <br>• Все результаты кэшируются — повторные запросы бесплатны
+    </div>
+
+    <div class="ai-model-selector">
+      <label>🤖 Модель ИИ:</label>
+      <select id="aiModelSelect">
+        <option value="openai">GPT-4o-mini (быстро, через Pollinations)</option>
+        <option value="openai-large">GPT-4o (точнее, через Pollinations)</option>
+        <option value="mistral">Mistral (через Pollinations)</option>
+        <option value="llama">Llama 3.3 (через Pollinations)</option>
+        <option value="claude-hybrid">Claude (через Puter.js, если доступен)</option>
+      </select>
+      <button class="ghost xs" id="testAiBtn">🔌 Проверить ИИ</button>
+      <span id="aiTestResult" style="font-size:12px;color:var(--muted)"></span>
+    </div>
+
+    <div class="npa-summary">
+      <div class="stat">Документов (НПА): <b id="sortDocCount" style="color:var(--sort)">0</b></div>
+      <div class="stat">Всего вопросов: <b id="sortQCount">0</b></div>
+      <div class="stat">Найдено парсером: <b id="sortWithParser" style="color:var(--law)">0</b></div>
+      <div class="stat">Найдено ИИ: <b id="sortWithAi" style="color:var(--ai)">0</b></div>
+      <div class="stat">Введено вручную: <b id="sortWithManual" style="color:var(--accent2)">0</b></div>
+      <div class="stat">Не найдено: <b id="sortMissing" style="color:var(--warn)">0</b></div>
+    </div>
+
+    <div style="display:flex;gap:10px;margin:12px 0;flex-wrap:wrap">
+      <button class="sort-btn" id="runSort">🔄 Пересортировать</button>
+      <button class="success" id="exportSortedXlsx">⬇ Экспорт таблицы (.xlsx)</button>
+      <button class="law-btn" id="exportAllDocsWord">⬇ СКАЧАТЬ ВСЕ ДОКУМЕНТЫ (.docx)</button>
+      <button class="ghost" id="toggleSortCollapse">📂 Свернуть/развернуть все</button>
+    </div>
+
+    <div id="exportSortStatus" class="export-status" style="display:none"></div>
+
+    <div id="sortedGroupsContainer" style="max-height:800px;overflow-y:auto;margin-top:12px"></div>
+  </section>
+
+  <section class="card full" id="finalCard" style="display:none">
+    <h2>📊 Итоговая таблица для экспорта</h2>
+    <div class="npa-toolbar">
+      <button class="success" id="exportFinalXlsx">⬇ ЭКСПОРТ В EXCEL (.xlsx)</button>
+      <button class="npa-btn" id="exportFinalCsv">⬇ ЭКСПОРТ CSV</button>
+      <button class="ghost" id="copyFinalTsv">📋 Копировать (TSV)</button>
+    </div>
+    <div id="exportStatus" class="export-status" style="display:none"></div>
+    <div style="overflow-x:auto;max-height:600px;overflow-y:auto">
+      <table id="finalTable">
+        <thead>
+          <tr>
+            <th>№</th>
+            <th>Тип</th>
+            <th>Текст вопроса</th>
+            <th>Ответы</th>
+            <th>Обоснование</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 🎓 ЭТАП 7: ОБУЧАЮЩИЙ КУРС -->
+  <section class="card full" id="courseCard" style="display:none">
+    <h2>🎓 Обучающий курс <span class="badge course">ИИ-методолог</span></h2>
+    <p class="desc">Собирает все вопросы + пункты НПА в структурированный обучающий курс по модулям. ИИ работает в два этапа: сначала предлагает структуру, после вашего подтверждения — генерирует контент.</p>
+
+    <div class="hint-box course">
+      <b>✨ Как это работает:</b>
+      <br>1. Введите <b>тему курса</b> (например, «Промышленная безопасность при работе с ВМ»)
+      <br>2. Выберите документы НПА, которые должны войти в курс
+      <br>3. ИИ предложит <b>структуру модулей</b> (Этап 1) — вы подтверждаете или корректируете
+      <br>4. После подтверждения ИИ сгенерирует <b>полный контент</b> со слайдами (Этап 2)
+      <br>5. Экспортируйте готовый курс в Word или TXT
+    </div>
+
+    <!-- Статистика базы знаний -->
+    <div class="course-stats">
+      <div class="course-stat-card">
+        <span class="num" id="courseKbTotal">0</span>
+        <span class="label">Пунктов в базе</span>
+      </div>
+      <div class="course-stat-card">
+        <span class="num" id="courseKbDocs">0</span>
+        <span class="label">Документов выбрано</span>
+      </div>
+      <div class="course-stat-card">
+        <span class="num" id="courseKbQuestions">0</span>
+        <span class="label">Вопросов с пунктами</span>
+      </div>
+      <div class="course-stat-card">
+        <span class="num" id="courseKbModules">0</span>
+        <span class="label">Модулей в курсе</span>
+      </div>
+    </div>
+
+    <!-- Настройки курса -->
+    <div style="display:grid;grid-template-columns:2fr 1fr;gap:14px;margin:14px 0">
+      <div>
+        <label>📚 Тема курса</label>
+        <input type="text" id="courseTopic" placeholder="Например: Промышленная безопасность при производстве взрывных работ">
+      </div>
+      <div>
+        <label>🎯 Макс. пунктов в модуле</label>
+        <input type="number" id="courseMaxPoints" value="35" min="5" max="100">
+      </div>
+    </div>
+
+    <label>📄 Документы НПА для включения в курс:</label>
+    <div id="courseDocsSelector" class="course-docs-selector">
+      <div style="color:var(--muted);font-size:12px">Сначала выполните мэппинг и сортировку по НПА</div>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:14px">
+      <button class="ghost xs" id="courseSelectAll">✅ Выбрать все</button>
+      <button class="ghost xs" id="courseSelectNone">❌ Снять выделение</button>
+      <button class="ghost xs" id="courseRefreshKb">🔄 Обновить базу знаний</button>
+    </div>
+
+    <!-- Кнопки управления -->
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin:14px 0">
+      <button class="course-btn" id="courseBuildPhase1">🧠 Этап 1: Сформировать структуру</button>
+      <button class="course-btn" id="courseConfirmPhase2" disabled>✅ Этап 2: Сгенерировать контент</button>
+      <button class="ghost" id="courseCopyPrompt">📋 Копировать промпт</button>
+      <button class="ghost" id="courseReset">🔄 Сбросить курс</button>
+    </div>
+
+    <!-- Промпт для отладки -->
+    <details style="margin:10px 0">
+      <summary>🔧 Показать сформированный промпт (для отладки)</summary>
+      <textarea id="coursePromptPreview" readonly style="min-height:200px;margin-top:8px;font-size:11px"></textarea>
+    </details>
+
+    <!-- Статус и прогресс -->
+    <div id="courseStatus" class="status" style="display:none"></div>
+
+    <!-- Результат Этапа 1 (структура) -->
+    <div id="coursePhase1Result" style="display:none;margin-top:14px">
+      <h3 style="color:var(--course);margin:0 0 10px">📋 Этап 1: Предложенная структура курса</h3>
+      <div class="hint-box" style="background:#ddf4ff;border-color:#54aeff;color:#0550ae">
+        <b>💡 Проверьте структуру:</b> если нужно что-то изменить — отредактируйте текст ниже, затем нажмите «Этап 2». ИИ учтёт ваши правки.
+      </div>
+      <textarea id="courseStructureEditor" style="min-height:300px;margin-top:10px;font-family:'Consolas',monospace;font-size:12px;line-height:1.6"></textarea>
+    </div>
+
+    <!-- Результат Этапа 2 (контент) -->
+    <div id="coursePhase2Result" style="display:none;margin-top:14px">
+      <h3 style="color:var(--course);margin:0 0 10px">📖 Этап 2: Готовый контент курса</h3>
+      <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap">
+        <button class="success" id="courseExportWord">⬇ Экспорт в Word (.docx)</button>
+        <button class="npa-btn" id="courseExportTxt">⬇ Экспорт в TXT</button>
+        <button class="ghost" id="courseCopyContent">📋 Копировать контент</button>
+        <button class="ghost" id="courseToggleView">👁 Переключить вид</button>
+      </div>
+      <div id="courseContentOutput" class="course-output"></div>
+    </div>
+  </section>
+
+</main>
+
+<div class="reset-bar">
+  <button class="danger" id="resetBtn">🗑 СБРОСИТЬ ВСЕ ДАННЫЕ</button>
+</div>
+
+<script>
+if(typeof pdfjsLib !== 'undefined'){
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+}
+
+const state = {
+  questions: [], wordBlocks: [], questionGroups: [],
+  mapping: {}, npaByQuestion: {}, npaRegistry: {},
+  threshold: 60, debugFilter: 'first30',
+  resultsFilter: 'all', registryFilter: 'all',
+  sortedGroups: [], sortCollapsed: false,
+  lawDocuments: {}, aiCache: {},
+  manualPointTexts: {}, pointSources: {},
+  aiBusy: false, aiModel: 'openai', lastAiError: null
+};
+
+// Состояние курса
+const courseState = {
+  phase: 0,
+  approvedStructure: '',
+  generatedContent: '',
+  selectedDocs: new Set(),
+  knowledgeBase: [],
+  viewMode: 'formatted' // 'formatted' | 'raw'
+};
+
+const $ = id => document.getElementById(id);
+const setStatus = (el, msg, type='') => {
+  el.style.display = 'block';
+  el.className = 'status ' + type;
+  el.innerHTML = msg;
+};
+
+/* =========================================================
+   ИИ-ПРОВАЙДЕРЫ
+   ========================================================= */
+async function detectAiProviders(){
+  const providers = [];
+  try {
+    const testResp = await fetch('https://text.pollinations.ai/openai', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        messages: [{role:'user', content:'Say OK'}],
+        model: 'openai', max_tokens: 5
+      })
+    });
+    if(testResp.ok) providers.push('pollinations');
+  } catch(e) { console.warn('Pollinations недоступен', e); }
+  if(typeof puter !== 'undefined' && puter.ai) providers.push('puter');
+  return providers;
+}
+
+async function initAiStatus(){
+  const bar = $('aiStatusBar');
+  const txt = $('aiStatusText');
+  try {
+    const providers = await detectAiProviders();
+    if(providers.length === 0){
+      bar.className = 'ai-status-bar err';
+      txt.innerHTML = '❌ ИИ недоступен. Проверьте интернет-соединение.';
+    } else {
+      bar.className = 'ai-status-bar ok';
+      const names = providers.map(p => p === 'pollinations' ? 'Pollinations.ai' : 'Puter.js').join(' + ');
+      txt.innerHTML = `✅ ИИ подключён: <b>${names}</b> · Бесплатно · Без регистрации`;
+    }
+  } catch(e) {
+    bar.className = 'ai-status-bar err';
+    txt.innerHTML = '❌ Ошибка проверки ИИ: ' + escapeHtml(e.message);
+  }
+}
+
+$('aiModelSelect').addEventListener('change', e => { state.aiModel = e.target.value; });
+
+$('testAiBtn').onclick = async () => {
+  const r = $('aiTestResult');
+  r.innerHTML = '<span class="loader ai"></span>Проверка...';
+  r.style.color = 'var(--muted)';
+  try {
+    const resp = await callAiApi('Скажи "OK" одним словом.');
+    r.innerHTML = `✅ ИИ работает! Модель: <b>${state.aiModel}</b>. Ответ: <b>${escapeHtml(String(resp).slice(0, 50))}</b>`;
+    r.style.color = 'var(--accent2)';
+  } catch(e) {
+    r.innerHTML = `❌ Ошибка: ${escapeHtml(e.message || String(e))}`;
+    r.style.color = 'var(--warn)';
+  }
+};
+
+function extractAiTextFromResponse(responseText, contentType){
+  if(contentType && contentType.includes('application/json')){
+    try {
+      const data = JSON.parse(responseText);
+      if(data?.choices?.[0]?.message?.content) return data.choices[0].message.content;
+      if(data?.choices?.[0]?.text) return data.choices[0].text;
+      if(typeof data?.response === 'string') return data.response;
+      if(typeof data?.content === 'string') return data.content;
+      if(typeof data?.text === 'string') return data.text;
+    } catch(e) {}
+  }
+  const trimmed = responseText.trim();
+  if(trimmed.startsWith('{') || trimmed.startsWith('[')){
+    try {
+      const data = JSON.parse(trimmed);
+      if(data?.choices?.[0]?.message?.content) return data.choices[0].message.content;
+      if(data?.choices?.[0]?.text) return data.choices[0].text;
+      if(typeof data?.response === 'string') return data.response;
+    } catch(e) {}
+  }
+  return responseText;
+}
+
+async function callAiApi(userMessage, options = {}){
+  const systemPrompt = options.systemPrompt || 'Ты — эксперт по нормативно-правовым актам РФ. Отвечай точно, без выдумок. Если не нашёл запрошенное — верни ТОЛЬКО слово NOT_FOUND.';
+  const maxTokens = options.maxTokens || 3000;
+  
+  if(state.aiModel === 'claude-hybrid'){
+    if(typeof puter === 'undefined' || !puter.ai){
+      throw new Error('Puter.js не загружен. Выберите другую модель.');
+    }
+    try {
+      const resp = await puter.ai.chat(systemPrompt + '\n\n' + userMessage, { model: 'claude-sonnet-4-20250514', max_tokens: maxTokens });
+      if(typeof resp === 'string') return resp;
+      if(resp?.message?.content) return resp.message.content;
+      if(resp?.text) return resp.text;
+      return String(resp);
+    } catch(e) {
+      throw new Error('Puter.js: ' + (e.message || String(e)));
+    }
+  }
+  
+  const modelMap = { 'openai': 'openai', 'openai-large': 'openai-large', 'mistral': 'mistral', 'llama': 'llama' };
+  const pollinationsModel = modelMap[state.aiModel] || 'openai';
+  let lastError = null;
+  
+  try {
+    const resp = await fetch('https://text.pollinations.ai/openai', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userMessage }
+        ],
+        model: pollinationsModel, max_tokens: maxTokens, temperature: 0, private: true
+      })
+    });
+    if(!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const responseText = await resp.text();
+    const contentType = resp.headers.get('content-type') || '';
+    const extracted = extractAiTextFromResponse(responseText, contentType);
+    if(extracted && extracted.trim().length > 0) return extracted;
+    throw new Error('Пустой ответ');
+  } catch(e) { lastError = e; console.warn('Pollinations OpenAI-format не сработал:', e); }
+  
+  try {
+    const prompt = systemPrompt + '\n\n' + userMessage;
+    const url = `https://text.pollinations.ai/${encodeURIComponent(prompt)}?model=${pollinationsModel}&max_tokens=${maxTokens}&private=true`;
+    const resp = await fetch(url);
+    if(!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const text = await resp.text();
+    if(text && text.trim().length > 0) return text.trim();
+    throw new Error('Пустой ответ');
+  } catch(e) { lastError = e; console.warn('Pollinations text-format не сработал:', e); }
+  
+  if(typeof puter !== 'undefined' && puter.ai){
+    try {
+      const resp = await puter.ai.chat(systemPrompt + '\n\n' + userMessage, { model: 'claude-sonnet-4-20250514', max_tokens: maxTokens });
+      if(typeof resp === 'string') return resp;
+      if(resp?.message?.content) return resp.message.content;
+      if(resp?.text) return resp.text;
+      return String(resp);
+    } catch(e) { lastError = e; }
+  }
+  
+  throw new Error(`Все провайдеры недоступны. Последняя ошибка: ${lastError?.message || 'неизвестно'}`);
+}
+
+/* =========================================================
+   🎓 ФУНКЦИИ ДЛЯ ОБУЧАЮЩЕГО КУРСА
+   ========================================================= */
+
+/* Построение базы знаний из всех данных */
+function buildKnowledgeBase(selectedDocKeys){
+  const entries = [];
+  
+  state.sortedGroups.forEach(group => {
+    if(selectedDocKeys && selectedDocKeys.size > 0 && !selectedDocKeys.has(group.docName)){
+      return;
+    }
+    
+    group.items.forEach(item => {
+      const { text: pointText, source } = getPointTextWithSource(item);
+      if(!pointText) return;
+      
+      entries.push({
+        docName: group.docName,
+        questionNum: item.qNum,
+        questionText: item.qText,
+        justification: item.justification,
+        pointRaw: item.pointRaw || '',
+        pointText: pointText,
+        source: source
+      });
+    });
+  });
+  
+  return entries;
+}
+
+/* Обновление статистики базы знаний */
+function updateCourseKbStats(){
+  const kb = courseState.knowledgeBase;
+  $('courseKbTotal').textContent = kb.length;
+  $('courseKbDocs').textContent = courseState.selectedDocs.size;
+  $('courseKbQuestions').textContent = new Set(kb.map(e => e.questionNum)).size;
+  
+  const maxPoints = +$('courseMaxPoints').value || 35;
+  const estimatedModules = Math.ceil(kb.length / maxPoints);
+  $('courseKbModules').textContent = estimatedModules;
+}
+
+/* Формирование промпта для Этапа 1 (структура) */
+function buildCoursePromptPhase1(){
+  const topic = $('courseTopic').value.trim();
+  if(!topic) throw new Error('Укажите тему курса');
+  
+  const maxPoints = +$('courseMaxPoints').value || 35;
+  const kb = courseState.knowledgeBase;
+  
+  if(kb.length === 0) throw new Error('Нет данных для формирования курса. Загрузите тексты законов и найдите пункты.');
+  
+  const docsMap = new Map();
+  kb.forEach(entry => {
+    if(!docsMap.has(entry.docName)) docsMap.set(entry.docName, []);
+    docsMap.get(entry.docName).push(entry);
+  });
+  
+  let kbText = '';
+  docsMap.forEach((entries, docName) => {
+    kbText += `\n### Документ: ${docName}\n`;
+    kbText += `Всего пунктов: ${entries.length}\n`;
+    kbText += `Список пунктов:\n`;
+    entries.forEach((e, i) => {
+      const qTextShort = e.questionText.length > 150 ? e.questionText.slice(0, 150) + '...' : e.questionText;
+      const pTextShort = e.pointText.slice(0, 200).replace(/\n/g, ' ');
+      kbText += `  ${i+1}. [Пункт ${e.pointRaw}] Вопрос №${e.questionNum}: "${qTextShort}"\n`;
+      kbText += `     Текст НПА: "${pTextShort}${e.pointText.length > 200 ? '...' : ''}"\n`;
+    });
+  });
+  
+  return `# РОЛЬ
+Ты — ведущий методолог по промышленной безопасности. Твоя задача — разработать обучающий курс на основе нормативно-правовых актов (НПА) для подготовки к аттестации Ростехнадзора.
+
+# ВХОДНЫЕ ДАННЫЕ
+- Тема курса: ${topic}
+- Целевой объём: до ${maxPoints} уникальных пунктов НПА на модуль (все пункты должны быть распределены без остатка)
+- Всего пунктов в базе знаний: ${kb.length}
+- Документов-источников: ${docsMap.size}
+
+# БАЗА ЗНАНИЙ (вопросы + пункты НПА)
+${kbText}
+
+# ЭТАП 1: Структура курса (текущая задача)
+1. Проанализируй тему курса и предоставленные материалы.
+2. Предложи логику разделения на модули с кратким описанием содержания каждого.
+3. Укажи ориентировочное количество пунктов НПА в каждом модуле (до ${maxPoints}).
+4. Убедись, что ВСЕ ${kb.length} пунктов будут распределены без остатка.
+5. ОЖИДАЙ подтверждения структуры от пользователя.
+
+# ФОРМАТ ОТВЕТА (Этап 1)
+Предложи структуру в следующем формате:
+
+## Предлагаемая структура курса: «${topic}»
+
+**Модуль 1. [Название]**
+- Содержание: [краткое описание]
+- Документы-источники: [список]
+- Пунктов НПА: ~[число]
+- Темы: [список ключевых тем]
+
+**Модуль 2. [Название]**
+...
+
+**Итого:** [N] модулей, ~[число] слайдов, все ${kb.length} пунктов распределены.
+
+# КРИТИЧЕСКИЕ ТРЕБОВАНИЯ
+✅ Все пункты НПА должны быть распределены без остатка.
+✅ В каждом модуле — до ${maxPoints} пунктов.
+✅ Логика: от общего к частному, от документации к практике.
+✅ Каждый модуль — самодостаточная тематическая единица.
+
+Сформируй структуру курса.`;
+}
+
+/* Формирование промпта для Этапа 2 (контент) */
+function buildCoursePromptPhase2(){
+  const topic = $('courseTopic').value.trim();
+  const maxPoints = +$('courseMaxPoints').value || 35;
+  const kb = courseState.knowledgeBase;
+  
+  if(!courseState.approvedStructure) throw new Error('Сначала подтвердите структуру курса (Этап 1)');
+  
+  const docsMap = new Map();
+  kb.forEach(entry => {
+    if(!docsMap.has(entry.docName)) docsMap.set(entry.docName, []);
+    docsMap.get(entry.docName).push(entry);
+  });
+  
+  let kbText = '';
+  docsMap.forEach((entries, docName) => {
+    kbText += `\n### Документ: ${docName}\n`;
+    entries.forEach((e, i) => {
+      kbText += `\n[Вопрос №${e.questionNum}] "${e.questionText}"\n`;
+      kbText += `Обоснование: ${e.justification}\n`;
+      kbText += `Текст пункта НПА (ДОСЛОВНО):\n${e.pointText}\n`;
+      kbText += `---\n`;
+    });
+  });
+  
+  return `# РОЛЬ
+Ты — ведущий методолог по промышленной безопасности. Твоя задача — разработать обучающий курс на основе нормативно-правовых актов (НПА) для подготовки к аттестации Ростехнадзора.
+
+# ВХОДНЫЕ ДАННЫЕ
+- Тема курса: ${topic}
+- Целевой объём: до ${maxPoints} уникальных пунктов НПА на модуль
+- Всего пунктов в базе знаний: ${kb.length}
+
+# УТВЕРЖДЁННАЯ СТРУКТУРА КУРСА
+${courseState.approvedStructure}
+
+# БАЗА ЗНАНИЙ (вопросы + полные тексты пунктов НПА)
+${kbText}
+
+# ЭТАП 2: Генерация контента
+Сгенерируй ПОЛНЫЙ контент курса согласно утверждённой структуре.
+
+# ФОРМАТ ВЫВОДА
+# МОДУЛЬ [Номер]. [Название модуля]
+**Документы-источники:**
+- [Список документов с краткой характеристикой]
+**Цель модуля:** [1-2 предложения о целях изучения]
+---
+## Раздел [Номер]. [Название раздела]
+### Слайд [Номер]. [Краткий подзаголовок — суть пункта]
+**[Название документа, Пункт №]** "[Текст вопроса]"
+> [Дословный текст пункта НПА — без изменений, сокращений, парафраза]
+---
+
+# КРИТИЧЕСКИЕ ТРЕБОВАНИЯ
+✅ Текст пунктов НПА должен быть сохранён ДОСЛОВНО (знаки препинания, сокращения, нумерация — без изменений).
+✅ Каждый слайд должен содержать вопрос из базы знаний в формате: "[Номер]. [Текст вопроса]".
+✅ Подзаголовок слайда — краткая суть пункта (не является частью закона, формулируется методологом).
+✅ Все пункты НПА должны быть распределены без остатка и дублирования.
+✅ Внутри модуля пункты группируются по логике: от общего к частному, от документации к практике.
+✅ Стиль изложения: формально-деловой, без прямого обращения к обучающемуся.
+✅ Нумерация слайдов — сквозная внутри модуля.
+
+# ПРИМЕР ОЖИДАЕМОГО РЕЗУЛЬТАТА
+### Слайд 1. Состав горноотводной документации
+**[Требования № 508, Пункт 4]** "100. В состав какой из перечисленной документации включаются горноотводный акт и графические приложения к нему? Выберите правильный вариант ответа."
+> 4. Горноотводная документация включает горноотводный акт, составленный по форме согласно приложению N 1 к настоящим Требованиям, и графические приложения к горноотводному акту.
+---
+
+# ЗАВЕРШЕНИЕ КАЖДОГО МОДУЛЯ
+После последнего слайда модуля добавь:
+> ✅ **Модуль [N] завершён: [кол-во] слайдов, распределены все пункты НПА по теме [кратко].**
+
+# ДОПОЛНИТЕЛЬНЫЕ УКАЗАНИЯ
+- Если один пункт НПА соответствует нескольким вопросам — создай отдельные слайды для каждого.
+- При группировке отдавай приоритет логике производственного процесса: документация → измерения → контроль → безопасность.
+- Сгенерируй ВСЕ модули сразу, полностью покрыв всю базу знаний.
+
+Начинай генерацию.`;
+}
+
+/* Отправка в ИИ */
+async function sendCourseToAI(prompt, phase){
+  const statusEl = $('courseStatus');
+  statusEl.style.display = 'block';
+  statusEl.className = 'status ai';
+  statusEl.innerHTML = `<span class="loader course"></span>ИИ работает над ${phase === 1 ? 'структурой курса' : 'контентом курса'}... Это может занять 1-3 минуты.`;
+  
+  try {
+    const response = await callAiApi(prompt, {
+      systemPrompt: 'Ты — ведущий методолог по промышленной безопасности. Создавай структурированные обучающие материалы на основе нормативно-правовых актов.',
+      maxTokens: phase === 1 ? 4000 : 12000
+    });
+    const result = String(response).trim();
+    
+    if(phase === 1){
+      courseState.approvedStructure = result;
+      courseState.phase = 1;
+      $('courseStructureEditor').value = result;
+      $('coursePhase1Result').style.display = 'block';
+      $('courseConfirmPhase2').disabled = false;
+      statusEl.className = 'status ok';
+      statusEl.innerHTML = `✅ Структура курса сформирована. Проверьте её и при необходимости отредактируйте, затем нажмите «Этап 2: Сгенерировать контент».`;
+      $('coursePhase1Result').scrollIntoView({behavior:'smooth', block:'start'});
+    } else {
+      courseState.generatedContent = result;
+      courseState.phase = 2;
+      renderCourseContent(result);
+      $('coursePhase2Result').style.display = 'block';
+      statusEl.className = 'status ok';
+      statusEl.innerHTML = `✅ Курс полностью сгенерирован! Можете экспортировать в Word или TXT.`;
+      $('coursePhase2Result').scrollIntoView({behavior:'smooth', block:'start'});
+    }
+    
+    return result;
+  } catch(e) {
+    statusEl.className = 'status err';
+    statusEl.innerHTML = `❌ Ошибка ИИ: ${escapeHtml(e.message)}`;
+    throw e;
+  }
+}
+
+/* Рендер контента курса (форматированный или сырой) */
+function renderCourseContent(content){
+  const output = $('courseContentOutput');
+  
+  if(courseState.viewMode === 'raw'){
+    output.textContent = content;
+    return;
+  }
+  
+  // Форматированный вид
+  output.innerHTML = '';
+  const lines = content.split('\n');
+  let currentModule = null;
+  
+  lines.forEach(line => {
+    const trimmed = line.trim();
+    if(!trimmed) return;
+    
+    // Модуль
+    if(/^#?\s*МОДУЛЬ\s+\d/i.test(trimmed) || /^#?\s*Модуль\s+\d/i.test(trimmed)){
+      const moduleDiv = document.createElement('div');
+      moduleDiv.className = 'course-module';
+      moduleDiv.innerHTML = `<h2 style="margin:0;color:var(--course)">${escapeHtml(trimmed.replace(/^#+\s*/, ''))}</h2>`;
+      output.appendChild(moduleDiv);
+      currentModule = moduleDiv;
+      return;
+    }
+    
+    // Раздел
+    if(/^##?\s*Раздел\s+\d/i.test(trimmed)){
+      const container = currentModule || output;
+      const div = document.createElement('div');
+      div.innerHTML = `<h3 style="color:var(--sort);margin:14px 0 8px">${escapeHtml(trimmed.replace(/^#+\s*/, ''))}</h3>`;
+      container.appendChild(div);
+      return;
+    }
+    
+    // Слайд
+    if(/^##?\s*Слайд\s+\d/i.test(trimmed) || /^###?\s*Слайд\s+\d/i.test(trimmed)){
+      const container = currentModule || output;
+      const slideDiv = document.createElement('div');
+      slideDiv.className = 'course-slide';
+      slideDiv.innerHTML = `<div class="course-slide-title">${escapeHtml(trimmed.replace(/^#+\s*/, ''))}</div>`;
+      container.appendChild(slideDiv);
+      currentModule = container;
+      // Временно меняем currentModule для добавления содержимого слайда
+      const origModule = currentModule;
+      currentModule = slideDiv;
+      setTimeout(() => { currentModule = origModule; }, 0);
+      return;
+    }
+    
+    // Цитата (текст НПА)
+    if(trimmed.startsWith('>')){
+      const container = currentModule || output;
+      const div = document.createElement('div');
+      div.className = 'course-slide-npa';
+      div.textContent = trimmed.slice(1).trim();
+      container.appendChild(div);
+      return;
+    }
+    
+    // Жирные строки (метаданные)
+    if(trimmed.startsWith('**') && trimmed.includes('**', 2)){
+      const container = currentModule || output;
+      const div = document.createElement('div');
+      div.style.cssText = 'font-weight:600;color:var(--text);margin:6px 0';
+      div.innerHTML = escapeHtml(trimmed.replace(/\*\*/g, '')).replace(/\[([^\]]+)\]/g, '<span style="color:var(--sort)">[$1]</span>');
+      container.appendChild(div);
+      return;
+    }
+    
+    // Вопрос в кавычках
+    if(/"\d+\./.test(trimmed) || /^\d+\.\s/.test(trimmed)){
+      const container = currentModule || output;
+      const div = document.createElement('div');
+      div.className = 'course-slide-question';
+      div.textContent = trimmed;
+      container.appendChild(div);
+      return;
+    }
+    
+    // Разделители
+    if(/^[-─]{3,}$/.test(trimmed)){
+      const container = currentModule || output;
+      const div = document.createElement('div');
+      div.style.cssText = 'text-align:center;color:var(--muted);margin:10px 0;border-top:1px dashed var(--border);padding-top:6px';
+      div.textContent = '─'.repeat(30);
+      container.appendChild(div);
+      return;
+    }
+    
+    // Обычный текст
+    const container = currentModule || output;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin:4px 0;line-height:1.6';
+    div.textContent = trimmed;
+    container.appendChild(div);
+  });
+}
+
+/* Инициализация селектора документов */
+function renderCourseDocsSelector(){
+  const container = $('courseDocsSelector');
+  if(state.sortedGroups.length === 0){
+    container.innerHTML = '<div style="color:var(--muted);font-size:12px">Сначала выполните мэппинг и сортировку по НПА</div>';
+    return;
+  }
+  
+  courseState.selectedDocs.clear();
+  let html = '';
+  state.sortedGroups.forEach((group, i) => {
+    const hasLaw = !!state.lawDocuments[group.docName];
+    const questionsWithPoints = group.items.filter(it => getPointTextWithSource(it).text).length;
+    const isAvailable = hasLaw && questionsWithPoints > 0;
+    
+    html += `<label class="course-doc-item ${!isAvailable ? 'disabled' : ''}">`;
+    html += `<input type="checkbox" data-course-doc="${i}" ${isAvailable ? 'checked' : ''} ${!isAvailable ? 'disabled' : ''} style="margin-top:3px;width:auto">`;
+    html += `<div style="flex:1;min-width:0">`;
+    html += `<div class="course-doc-name">${escapeHtml(group.docName)}</div>`;
+    html += `<div class="course-doc-meta">`;
+    html += `Вопросов: <b>${group.items.length}</b> · С пунктами: <b style="color:var(--accent2)">${questionsWithPoints}</b>`;
+    if(!hasLaw) html += ` · <span style="color:var(--warn)">⚠ Закон не загружен</span>`;
+    html += `</div></div></label>`;
+    
+    if(isAvailable) courseState.selectedDocs.add(group.docName);
+  });
+  
+  container.innerHTML = html;
+  
+  container.querySelectorAll('[data-course-doc]').forEach(cb => {
+    cb.addEventListener('change', () => {
+      const gi = +cb.dataset.courseDoc;
+      const docName = state.sortedGroups[gi].docName;
+      if(cb.checked) courseState.selectedDocs.add(docName);
+      else courseState.selectedDocs.delete(docName);
+      refreshCourseKb();
+    });
+  });
+  
+  refreshCourseKb();
+}
+
+/* Обновление базы знаний */
+function refreshCourseKb(){
+  courseState.knowledgeBase = buildKnowledgeBase(courseState.selectedDocs);
+  updateCourseKbStats();
+}
+
+/* Обработчики кнопок курса */
+$('courseSelectAll').onclick = () => {
+  document.querySelectorAll('[data-course-doc]').forEach(cb => {
+    if(!cb.disabled){
+      cb.checked = true;
+      const gi = +cb.dataset.courseDoc;
+      courseState.selectedDocs.add(state.sortedGroups[gi].docName);
+    }
+  });
+  refreshCourseKb();
+};
+
+$('courseSelectNone').onclick = () => {
+  document.querySelectorAll('[data-course-doc]').forEach(cb => {
+    cb.checked = false;
+  });
+  courseState.selectedDocs.clear();
+  refreshCourseKb();
+};
+
+$('courseRefreshKb').onclick = () => {
+  refreshCourseKb();
+  const statusEl = $('courseStatus');
+  statusEl.style.display = 'block';
+  statusEl.className = 'status ok';
+  statusEl.innerHTML = `✅ База знаний обновлена. Пунктов: <b>${courseState.knowledgeBase.length}</b>`;
+};
+
+$('courseBuildPhase1').onclick = async () => {
+  try {
+    refreshCourseKb();
+    const prompt = buildCoursePromptPhase1();
+    $('coursePromptPreview').value = prompt;
+    await sendCourseToAI(prompt, 1);
+  } catch(e) {
+    $('courseStatus').className = 'status err';
+    $('courseStatus').innerHTML = `❌ ${escapeHtml(e.message)}`;
+    $('courseStatus').style.display = 'block';
+  }
+};
+
+$('courseConfirmPhase2').onclick = async () => {
+  const editedStructure = $('courseStructureEditor').value.trim();
+  courseState.approvedStructure = editedStructure;
+  
+  try {
+    const prompt = buildCoursePromptPhase2();
+    $('coursePromptPreview').value = prompt;
+    await sendCourseToAI(prompt, 2);
+  } catch(e) {
+    $('courseStatus').className = 'status err';
+    $('courseStatus').innerHTML = `❌ ${escapeHtml(e.message)}`;
+    $('courseStatus').style.display = 'block';
+  }
+};
+
+$('courseCopyPrompt').onclick = async () => {
+  const prompt = $('coursePromptPreview').value;
+  if(!prompt){
+    alert('Сначала сформируйте промпт');
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(prompt);
+    const btn = $('courseCopyPrompt');
+    const orig = btn.textContent;
+    btn.textContent = '✓ Скопировано!';
+    setTimeout(() => btn.textContent = orig, 1500);
+  } catch(e) {
+    alert('Ошибка: ' + e.message);
+  }
+};
+
+$('courseCopyContent').onclick = async () => {
+  const content = courseState.generatedContent;
+  if(!content){
+    alert('Сначала сгенерируйте контент');
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(content);
+    const btn = $('courseCopyContent');
+    const orig = btn.textContent;
+    btn.textContent = '✓ Скопировано!';
+    setTimeout(() => btn.textContent = orig, 1500);
+  } catch(e) {
+    alert('Ошибка: ' + e.message);
+  }
+};
+
+$('courseToggleView').onclick = () => {
+  courseState.viewMode = courseState.viewMode === 'formatted' ? 'raw' : 'formatted';
+  renderCourseContent(courseState.generatedContent);
+  const btn = $('courseToggleView');
+  btn.textContent = courseState.viewMode === 'formatted' ? '👁 Переключить вид (сейчас: форматированный)' : '👁 Переключить вид (сейчас: исходный текст)';
+};
+
+$('courseReset').onclick = () => {
+  if(!confirm('Сбросить все данные курса? Структура и контент будут удалены.')) return;
+  courseState.phase = 0;
+  courseState.approvedStructure = '';
+  courseState.generatedContent = '';
+  $('coursePhase1Result').style.display = 'none';
+  $('coursePhase2Result').style.display = 'none';
+  $('courseConfirmPhase2').disabled = true;
+  $('courseStatus').style.display = 'none';
+  $('coursePromptPreview').value = '';
+  $('stCourseSlides').textContent = '0';
+};
+
+/* Экспорт курса в TXT */
+$('courseExportTxt').onclick = () => {
+  const content = courseState.generatedContent;
+  if(!content){
+    alert('Сначала сгенерируйте контент');
+    return;
+  }
+  const topic = $('courseTopic').value.trim() || 'course';
+  const blob = new Blob([content], {type:'text/plain;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `Курс_${topic.slice(0, 50).replace(/[\\/:*?"<>|]/g, '_')}.txt`;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => {
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, 100);
+};
+
+/* Экспорт курса в Word */
+$('courseExportWord').onclick = async () => {
+  const content = courseState.generatedContent;
+  if(!content){
+    alert('Сначала сгенерируйте контент');
+    return;
+  }
+  
+  const statusEl = $('courseStatus');
+  statusEl.style.display = 'block';
+  statusEl.className = 'status';
+  statusEl.innerHTML = '<span class="loader course"></span>Генерация Word-документа...';
+  
+  try {
+    const { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType } = docx;
+    const topic = $('courseTopic').value.trim() || 'Обучающий курс';
+    
+    const children = [];
+    
+    // Титульный слайд
+    children.push(new Paragraph({
+      text: 'ОБУЧАЮЩИЙ КУРС',
+      heading: HeadingLevel.TITLE,
+      alignment: AlignmentType.CENTER,
+      spacing: { after: 200 }
+    }));
+    children.push(new Paragraph({
+      text: topic,
+      heading: HeadingLevel.HEADING_1,
+      alignment: AlignmentType.CENTER,
+      spacing: { after: 400 }
+    }));
+    children.push(new Paragraph({
+      text: `Подготовка к аттестации Ростехнадзора\nДата: ${new Date().toLocaleDateString('ru-RU')}`,
+      alignment: AlignmentType.CENTER,
+      spacing: { after: 600 }
+    }));
+    children.push(new Paragraph({ text: '═'.repeat(60), alignment: AlignmentType.CENTER, spacing: { after: 400 } }));
+    
+    // Разбираем контент по строкам
+    const lines = content.split('\n');
+    let moduleCount = 0;
+    let slideCount = 0;
+    
+    lines.forEach(line => {
+      const trimmed = line.trim();
+      if(!trimmed) return;
+      
+      // Заголовки модулей
+      if(/^#?\s*МОДУЛЬ\s+\d/i.test(trimmed) || /^#?\s*Модуль\s+\d/i.test(trimmed)){
+        moduleCount++;
+        children.push(new Paragraph({
+          text: trimmed.replace(/^#+\s*/, ''),
+          heading: HeadingLevel.HEADING_1,
+          spacing: { before: 400, after: 200 }
+        }));
+      }
+      // Заголовки разделов
+      else if(/^##?\s*Раздел\s+\d/i.test(trimmed)){
+        children.push(new Paragraph({
+          text: trimmed.replace(/^#+\s*/, ''),
+          heading: HeadingLevel.HEADING_2,
+          spacing: { before: 300, after: 150 }
+        }));
+      }
+      // Заголовки слайдов
+      else if(/^##?\s*Слайд\s+\d/i.test(trimmed) || /^###?\s*Слайд\s+\d/i.test(trimmed)){
+        slideCount++;
+        children.push(new Paragraph({
+          text: trimmed.replace(/^#+\s*/, ''),
+          heading: HeadingLevel.HEADING_3,
+          spacing: { before: 250, after: 100 }
+        }));
+      }
+      // Цитаты (текст НПА)
+      else if(trimmed.startsWith('>')){
+        children.push(new Paragraph({
+          text: trimmed.slice(1).trim(),
+          indent: { left: 720 },
+          spacing: { after: 100 },
+          italics: true,
+          border: { left: { style: 'single', size: 12, color: '8250DF', space: 10 } }
+        }));
+      }
+      // Жирные строки (метаданные)
+      else if(trimmed.startsWith('**') && trimmed.endsWith('**')){
+        children.push(new Paragraph({
+          children: [
+            new TextRun({ text: trimmed.slice(2, -2), bold: true, size: 22 })
+          ],
+          spacing: { after: 80 }
+        }));
+      }
+      // Разделители
+      else if(/^[-─]{3,}$/.test(trimmed)){
+        children.push(new Paragraph({
+          text: '─'.repeat(50),
+          alignment: AlignmentType.CENTER,
+          spacing: { before: 150, after: 150 }
+        }));
+      }
+      // Обычный текст
+      else {
+        children.push(new Paragraph({
+          text: trimmed,
+          spacing: { after: 80 }
+        }));
+      }
+    });
+    
+    $('stCourseSlides').textContent = slideCount;
+    
+    const doc = new Document({
+      sections: [{ properties: {}, children }]
+    });
+    
+    const blob = await Packer.toBlob(doc);
+    const fileName = `Курс_${topic.slice(0, 50).replace(/[\\/:*?"<>|]/g, '_')}.docx`;
+    saveAs(blob, fileName);
+    
+    statusEl.className = 'status ok';
+    statusEl.innerHTML = `✅ Документ <b>${escapeHtml(fileName)}</b> создан! Модулей: <b>${moduleCount}</b>, слайдов: <b>${slideCount}</b>`;
+  } catch(e) {
+    console.error(e);
+    statusEl.className = 'status err';
+    statusEl.innerHTML = `❌ Ошибка: <b>${escapeHtml(e.message)}</b>`;
+  }
+};
+
+/* =========================================================
+   СУЩЕСТВУЮЩИЕ ФУНКЦИИ (сохранены без изменений)
+   ========================================================= */
+
+function buildLawPrompt(pointRaw, pointNum, lawText){
+  let contextText = lawText;
+  if(lawText.length > 80000) contextText = extractRelevantContext(lawText, pointNum);
+  
+  return `Ты — эксперт по нормативно-правовым актам Российской Федерации. Твоя задача — ТОЧНО извлечь текст указанного пункта из документа.
+
+═══════════════════════════════════════════════════
+📋 ПРАВИЛА ИЗВЛЕЧЕНИЯ (СТРОГО СОБЛЮДАТЬ):
+═══════════════════════════════════════════════════
+
+1. ✅ ЧТО ВКЛЮЧАТЬ в ответ:
+   - Сам текст пункта (после номера)
+   - ВСЕ подпункты этого пункта (например, для п. 7: 7.1, 7.2, 7.2.1 и т.д.)
+   - ВСЕ маркированные списки внутри пункта
+   - ВСЕ абзацы, которые относятся к этому пункту
+   - Сохраняй ОРИГИНАЛЬНОЕ форматирование
+
+2. ❌ ЧТО НЕ ВКЛЮЧАТЬ:
+   - НЕ включай СЛЕДУЮЩИЙ пункт
+   - НЕ включай ПРЕДЫДУЩИЙ пункт
+   - НЕ включай номер пункта в начале ответа
+   - НЕ добавляй комментарии, пояснения
+
+3. 🚫 ЕСЛИ ПУНКТ НЕ НАЙДЕН:
+   - Верни ТОЛЬКО слово: NOT_FOUND
+   - НЕ придумывай текст
+
+4. 📐 ФОРМАТ НОМЕРОВ ПУНКТОВ:
+   - Арабские цифры: "7.", "7) ", "7 "
+   - Подпункты: "7.1.", "7.1.1.", "7.1.1.1."
+   - Римские цифры: "VII.", "Глава 7."
+   - Буквенные подпункты: "а)", "б)", "в)"
+
+═══════════════════════════════════════════════════
+📝 ПРИМЕРЫ ПРАВИЛЬНОГО ИЗВЛЕЧЕНИЯ:
+═══════════════════════════════════════════════════
+
+❓ Запрос: "Найди пункт 7"
+
+✅ ПРАВИЛЬНЫЙ ответ:
+"При поступлении взрывчатых материалов на склад они должны подвергаться входному контролю.
+Все взрывчатые материалы должны подвергаться испытаниям:
+- при возникновении сомнений в доброкачественности;
+- перед истечением гарантийного срока.
+Результаты испытаний оформляются актом."
+
+❌ НЕПРАВИЛЬНЫЙ ответ (включает п. 8):
+"При поступлении... [текст п. 7] ...
+8. Сушить патроны можно в заводской упаковке..." ← НЕЛЬЗЯ включать!
+
+═══════════════════════════════════════════════════
+📄 ТЕКСТ НОРМАТИВНОГО АКТА:
+═══════════════════════════════════════════════════
+
+${contextText}
+
+═══════════════════════════════════════════════════
+🎯 ТВОЯ ЗАДАЧА:
+═══════════════════════════════════════════════════
+
+Найди и верни ПОЛНЫЙ текст пункта с номером "${pointRaw}" (числовое значение: ${pointNum}).
+
+Верни ТОЛЬКО текст пункта БЕЗ номера в начале и БЕЗ комментариев.
+Если пункт не найден — верни ТОЛЬКО слово NOT_FOUND.`;
+}
+
+function extractRelevantContext(lawText, targetPointNum){
+  const patterns = [
+    new RegExp(`^\\s*${targetPointNum}\\s*[.)]`, 'm'),
+    new RegExp(`^\\s*${targetPointNum}\\s+[^\\d]`, 'm'),
+    new RegExp(`\\bп\\.?\\s*${targetPointNum}\\b`, 'i'),
+  ];
+  let bestPos = -1;
+  for(const pattern of patterns){
+    const m = lawText.match(pattern);
+    if(m){ bestPos = m.index; break; }
+  }
+  if(bestPos === -1) return lawText.slice(0, 80000);
+  const start = Math.max(0, bestPos - 5000);
+  const end = Math.min(lawText.length, bestPos + 25000);
+  let chunk = lawText.slice(start, end);
+  if(start > 0) chunk = '[... пропущено начало документа ...]\n\n' + chunk;
+  if(end < lawText.length) chunk = chunk + '\n\n[... пропущено продолжение документа ...]';
+  return chunk;
+}
+
+async function findPointViaAI(docKey, pointNum, pointRaw){
+  const lawDoc = state.lawDocuments[docKey];
+  if(!lawDoc) throw new Error('Закон не загружен');
+  const cacheKey = String(pointNum);
+  if(state.aiCache[docKey] && state.aiCache[docKey][cacheKey] !== undefined){
+    return state.aiCache[docKey][cacheKey];
+  }
+  const lawText = lawDoc.text;
+  const prompt = buildLawPrompt(pointRaw, pointNum, lawText);
+  console.log(`[ИИ] Запрос пункта ${pointRaw} для документа ${docKey.slice(0, 50)}...`);
+  
+  try {
+    const response = await callAiApi(prompt);
+    let cleaned = String(response).trim();
+    console.log(`[ИИ] Ответ для ${pointRaw}:`, cleaned.slice(0, 200));
+    
+    const hallucinationMarkers = [
+      /не могу найти/i, /не удалось найти/i,
+      /в предоставленном тексте/i, /в данном документе/i,
+      /как.*языковая модель/i, /я.*не.*могу/i, /к сожалению/i,
+    ];
+    const isHallucination = hallucinationMarkers.some(m => m.test(cleaned)) && cleaned.length < 300;
+    const isNotFound = /^NOT[_\s]?FOUND$/i.test(cleaned) 
+      || (/не найден/i.test(cleaned) && cleaned.length < 50)
+      || isHallucination;
+    
+    const nextPointNum = pointNum + 1;
+    const nextPointRegex = new RegExp(`^\\s*${nextPointNum}\\s*[.)]`, 'm');
+    if(nextPointRegex.test(cleaned)){
+      const cutMatch = cleaned.match(nextPointRegex);
+      if(cutMatch) cleaned = cleaned.slice(0, cutMatch.index).trim();
+    }
+    
+    const result = isNotFound ? null : cleaned;
+    if(!state.aiCache[docKey]) state.aiCache[docKey] = {};
+    state.aiCache[docKey][cacheKey] = result;
+    console.log(`[ИИ] Результат для ${pointRaw}: ${result ? 'НАЙДЕНО (' + result.length + ' симв.)' : 'НЕ НАЙДЕНО'}`);
+    return result;
+  } catch(e) {
+    console.error(`[ИИ] Ошибка для ${pointRaw}:`, e);
+    throw e;
+  }
+}
+
+async function findAllMissingViaAI(groupIdx){
+  if(state.aiBusy){ alert('ИИ уже работает, дождитесь завершения'); return; }
+  const group = state.sortedGroups[groupIdx];
+  if(!group) return;
+  const lawDoc = state.lawDocuments[group.docName];
+  if(!lawDoc){ alert('Сначала загрузите текст закона для этой группы'); return; }
+  const missingItems = group.items.filter(item => !getPointTextWithSource(item).text);
+  if(missingItems.length === 0){ alert('Все пункты уже найдены!'); return; }
+  state.aiBusy = true;
+  const statusEl = $('exportSortStatus');
+  statusEl.style.display = 'block';
+  statusEl.className = 'export-status ai';
+  const progressDiv = document.createElement('div');
+  progressDiv.className = 'ai-progress active';
+  progressDiv.innerHTML = `
+    <div><span class="loader ai"></span>Поиск пунктов через ИИ (${state.aiModel})... <span id="aiProgressText">0 / ${missingItems.length}</span></div>
+    <div class="ai-progress-bar"><div class="ai-progress-fill" id="aiProgressFill"></div></div>
+  `;
+  statusEl.innerHTML = '';
+  statusEl.appendChild(progressDiv);
+  let found = 0, failed = 0;
+  const uniquePoints = new Map();
+  missingItems.forEach(item => {
+    const key = String(item.pointNum);
+    if(!uniquePoints.has(key)) uniquePoints.set(key, []);
+    uniquePoints.get(key).push(item);
+  });
+  const total = uniquePoints.size;
+  let done = 0;
+  for(const [pointNumStr, items] of uniquePoints.entries()){
+    const item = items[0];
+    done++;
+    $('aiProgressText').textContent = `${done} / ${total}`;
+    $('aiProgressFill').style.width = (done / total * 100) + '%';
+    try {
+      const result = await findPointViaAI(group.docName, item.pointNum, item.pointRaw);
+      if(result){
+        found++;
+        items.forEach(it => { state.pointSources[it.qi] = 'ai'; });
+      } else { failed++; }
+    } catch(e) {
+      failed++;
+      const errMsg = document.createElement('div');
+      errMsg.style.cssText = 'color:var(--warn);font-size:11px;margin-top:4px';
+      errMsg.textContent = `⚠ Пункт ${item.pointRaw}: ${(e.message || String(e)).slice(0, 200)}`;
+      statusEl.appendChild(errMsg);
+    }
+    await new Promise(r => setTimeout(r, 500));
+    renderSortedGroups();
+    updateSortStats();
+  }
+  state.aiBusy = false;
+  statusEl.className = 'export-status ok';
+  statusEl.innerHTML = `✅ ИИ (${state.aiModel}) завершил работу. Найдено: <b>${found}</b> из <b>${total}</b>. Не найдено: <b>${failed}</b>.`;
+}
+
+const STOP = new Set(('и в на с по для из от до при за над под через а но или что как это его ее их все весь вся the a an of to in on for with and or is are was were be been').split(' '));
+function tokenize(text){
+  if(!text) return [];
+  return text.toLowerCase().replace(/[^\p{L}\p{N}\s]/gu,' ').split(/\s+/).filter(w => w.length > 2 && !STOP.has(w));
+}
+function cosineSim(a, b){
+  const va = {}, vb = {};
+  a.forEach(w => va[w] = (va[w]||0)+1);
+  b.forEach(w => vb[w] = (vb[w]||0)+1);
+  let dot=0, na=0, nb=0;
+  for(const k in va){ na += va[k]*va[k]; if(vb[k]) dot += va[k]*vb[k]; }
+  for(const k in vb){ nb += vb[k]*vb[k]; }
+  if(!na || !nb) return 0;
+  return dot / (Math.sqrt(na)*Math.sqrt(nb));
+}
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+const NPA_MARKERS = [
+  /\b(?:п\.?\s*п?\.?|пункт[а-я]?)\s*\d+/i,
+  /\b(?:ст\.?|статья[а-я]?)\s*\d+/i,
+  /\bприложен[иеия]+\s*№?\s*\d+/i,
+  /\bФНП\s*№?\s*\d+/i,
+  /\bФЗ\s*(?:-\s*)?\d+/i, /\b\d+\s*-\s*ФЗ/i,
+  /\bприказ[а-я]?[\s\S]*?№\s*\d+/i,
+  /\b(?:постановлен[иея]+|распоряжен[иея]+|указ)[\s\S]*?№\s*\d+/i,
+  /\b(?:ГОСТ|СанПиН|СП|СНиП)\s*[A-Z]?\s*\d/i,
+  /\bТР\s*(?:ТС|ЕАЭС)\s*\d+[-–—\/]\d+/i,
+  /\bТР\s*(?:ТС|ЕАЭС)/i,
+  /\bРешени[\s\w]*?Совет[а-я]*\s+ЕЭК[\s\S]*?№\s*\d+/i,
+  /\bТребовани[\s\w]*?№\s*\d+/i,
+  /\b(?:КоАП|УК|ГК|ТК)\b/,
+  /№\s*\d+/,
+  /\bадминистративн\w+\s+регламент/i,
+  /\bростехнадзор/i,
+  /\bфедеральн\w+\s+закон/i,
+];
+
+const NPA_START_MARKERS = [
+  /^п\.?\s*п?\.?\s*\d+/i, /^ст\.?\s*\d+/i, /^приложен[иеия]+/i,
+  /^приказ[а-я]?/i, /^постановлен[иея]+/i, /^распоряжен[иея]+/i, /^указ\s/i,
+  /^фнп\s/i, /^фз[\s-]/i, /^ГОСТ/i, /^СанПиН/i,
+  /^ТР\s*(?:ТС|ЕАЭС)/i, /^Решени[\s\w]*?Совет/i, /^Требовани/i,
+  /^административн/i, /^федеральн\w+\s+закон/i,
+];
+
+function isAnswerOption(t){ return /^[А-ЯA-Zа-я]\s*[.)]\s+[А-ЯA-Zа-я]/.test(t); }
+function isQuestionLine(t){ return /^\s*\d{1,4}\s*[.)\]:]\s+[А-ЯA-ZА-Я]/.test(t) && t.length > 60; }
+function looksLikeNpa(line){
+  if(!line) return false;
+  const t = line.trim();
+  if(t.length < 3) return false;
+  if(!/\d/.test(t) && !/№/.test(t)) return false;
+  if(isAnswerOption(t) && t.length > 30) return false;
+  if(isQuestionLine(t)) return false;
+  if(t.length <= 250) return NPA_MARKERS.some(m => m.test(t));
+  return NPA_START_MARKERS.some(m => m.test(t));
+}
+
+function extractNpaFromBlock(text){
+  if(!text) return null;
+  const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  for(let i = lines.length - 1; i >= 0; i--){
+    if(looksLikeNpa(lines[i])) return lines[i];
+  }
+  const npaPatterns = [
+    /приложен[иеия]+\s*№?\s*\d+\s+ТР\s*(?:ТС|ЕАЭС)\s*\d+[-–—\/]\d+/i,
+    /решени[\s\S]{0,100}?совет[\s\S]{0,100}?еэк[\s\S]{0,100}?№\s*\d+/i,
+    /требовани[\s\S]{0,300}?№\s*\d+/i,
+    /приказ[\s\S]{0,300}?№\s*\d+/i,
+    /административн\w+\s+регламент[\s\S]{0,300}?№\s*\d+/i,
+    /фнп\s*№?\s*\d+/i, /фз\s*(?:-\s*)?\d+/i, /\d+\s*-\s*фз/i,
+    /тр\s*(?:тс|еаэс)\s*\d+[-–—\/]\d+/i,
+    /приложен[иеия]+\s*№?\s*\d+/i,
+    /п\.?\s*п?\.?\s*\d+/i, /ст\.?\s*\d+/i,
+  ];
+  for(const p of npaPatterns){
+    const m = text.match(new RegExp(p.source, 'i'));
+    if(m){
+      const idx = m.index;
+      const start = text.lastIndexOf('\n', idx) + 1;
+      let end = text.indexOf('\n', idx + m[0].length);
+      if(end === -1) end = text.length;
+      const candidate = text.slice(start, end).trim();
+      if(candidate.length < 800) return candidate;
+    }
+  }
+  return null;
+}
+
+function extractNpaPrefix(npaText){
+  if(!npaText) return '';
+  const t = npaText.trim();
+  const m = t.match(/^(п\.?\s*п?\.?\s*\d+(?:\.\d+)?(?:\s*[-–—]\s*\d+(?:\.\d+)?)?\s+|ст\.?\s*\d+(?:\s*[-–—]\s*\d+)?\s+|приложен[иеия]+\s*№?\s*\d+\s+|глав[аы]?\s*[IVXLCDM\d]+\s+|раздел[аы]?\s*[IVXLCDM\d]+\s+)/i);
+  return m ? m[1] : '';
+}
+
+function extractShortNpaName(npaText){
+  if(!npaText) return null;
+  let t = npaText.trim();
+  t = t.replace(/^(?:п\.?\s*п?\.?\s*\d+(?:\.\d+)?\s+|ст\.?\s*\d+\s+|приложен[иеия]+\s*№?\s*\d+\s+|глав[аы]?\s*[IVXLCDM\d]+\s+|раздел[аы]?\s*[IVXLCDM\d]+\s+)/i, '').trim();
+  const quoteMatch = t.match(/[«""]([^»""]+)[»""]/);
+  if(quoteMatch){
+    const inQuotes = quoteMatch[1].trim();
+    const trMatch = inQuotes.match(/^(ТР\s*(?:ТС|ЕАЭС)\s*\d+[-–—\/]\d+)/i);
+    if(trMatch) return trMatch[1].trim();
+    const fzMatch = inQuotes.match(/^(\d+\s*-\s*ФЗ|ФЗ\s*(?:-\s*)?\d+)/i);
+    if(fzMatch) return fzMatch[1].trim();
+    const fnpMatch = inQuotes.match(/^(ФНП\s*№?\s*\d+)/i);
+    if(fnpMatch) return fnpMatch[1].trim();
+  }
+  const docPatterns = [
+    /(ТР\s*(?:ТС|ЕАЭС)\s*\d+[-–—\/]\d+)/i,
+    /(Решени[\s\w]*?Совет[а-я]*\s+ЕЭК\s+от\s+[\d.]+\s*№\s*\d+)/i,
+    /(Требовани[\s\S]{0,200}?утвержденн[\s\S]{0,100}?№\s*\d+)/i,
+    /(Приказ[\s\w]*?от\s+[\d.]+\s*№\s*\d+)/i,
+    /(Постановлени[\s\w]*?от\s+[\d.]+\s*№\s*\d+)/i,
+    /(Распоряжени[\s\w]*?от\s+[\d.]+\s*№\s*\d+)/i,
+    /(Указ[\s\w]*?от\s+[\d.]+\s*№\s*\d+)/i,
+    /(ФНП\s*№?\s*\d+)/i,
+    /(ФЗ\s*(?:-\s*)?\d+)/i,
+    /(\d+\s*-\s*ФЗ)/i,
+    /(ГОСТ\s+[A-Z]?\s*[\d.\-]+)/i,
+    /(СанПиН[\s\d.\-]+)/i,
+    /(СП\s+\d+[\s\S]{0,80}?№\s*\d+)/i,
+    /(СНиП[\s\d.\-]+)/i,
+  ];
+  for(const p of docPatterns){
+    const m = t.match(p);
+    if(m){
+      let result = m[1].trim();
+      result = result.replace(/\s*«.*$/, '').trim();
+      result = result.replace(/^Приказ[а-я]*/i, 'Приказ');
+      result = result.replace(/^Постановлени[ея]/i, 'Постановление');
+      result = result.replace(/^Распоряжени[ея]/i, 'Распоряжение');
+      result = result.replace(/^Решени[ея]/i, 'Решение');
+      result = result.replace(/^Требовани[ея]/i, 'Требования');
+      return result;
+    }
+  }
+  const cutQuote = t.search(/[«"]/);
+  if(cutQuote > 0) return t.slice(0, cutQuote).trim();
+  return t.slice(0, 150);
+}
+
+function getJustification(qi){
+  const fullNpa = state.npaByQuestion[qi];
+  if(!fullNpa) return '';
+  const prefix = extractNpaPrefix(fullNpa);
+  const shortNpa = extractShortNpaName(fullNpa);
+  const fullName = state.npaRegistry[shortNpa];
+  if(fullName && fullName.trim()) return (prefix + fullName.trim()).trim();
+  return fullNpa;
+}
+
+function extractPointInfo(justification){
+  if(!justification) return { num: Infinity, type: 'unknown', raw: '' };
+  const t = justification.trim();
+  let m = t.match(/^п\.?\s*п?\.?\s*(\d+(?:\.\d+)?)/i);
+  if(m) return { num: parseFloat(m[1]), type: 'п.', raw: m[0] };
+  m = t.match(/^п\.?\s*(\d+(?:\.\d+)?)/i);
+  if(m) return { num: parseFloat(m[1]), type: 'п.', raw: m[0] };
+  m = t.match(/^ст\.?\s*(\d+)/i);
+  if(m) return { num: parseFloat(m[1]), type: 'ст.', raw: m[0] };
+  m = t.match(/^приложен[иеия]+\s*№?\s*(\d+)/i);
+  if(m) return { num: parseFloat(m[1]), type: 'Приложение', raw: m[0] };
+  m = t.match(/^глав[аы]?\s*([IVXLCDM]+)/i);
+  if(m){
+    const roman = m[1].toUpperCase();
+    const romanMap = {'I':1,'V':5,'X':10,'L':50,'C':100,'D':500,'M':1000};
+    let num = 0;
+    for(let i=0;i<roman.length;i++){
+      const cur = romanMap[roman[i]]||0;
+      const next = romanMap[roman[i+1]]||0;
+      if(cur < next) num -= cur; else num += cur;
+    }
+    return { num, type: 'глава', raw: m[0] };
+  }
+  m = t.match(/^раздел[аы]?\s*([IVXLCDM\d]+)/i);
+  if(m){
+    const s = m[1];
+    if(/^\d+$/.test(s)) return { num: parseInt(s), type: 'раздел', raw: m[0] };
+    return { num: 0, type: 'раздел', raw: m[0] };
+  }
+  return { num: Infinity, type: '—', raw: '' };
+}
+
+function getPointTextWithSource(item){
+  if(state.manualPointTexts[item.qi]) return { text: state.manualPointTexts[item.qi], source: 'manual' };
+  const fullNpa = state.npaByQuestion[item.qi];
+  if(!fullNpa) return { text: null, source: null };
+  const shortNpa = extractShortNpaName(fullNpa);
+  const fullName = state.npaRegistry[shortNpa];
+  const docKey = (fullName && fullName.trim()) ? fullName.trim() : (shortNpa || '');
+  if(state.aiCache[docKey] && state.aiCache[docKey][String(item.pointNum)] !== undefined){
+    return { text: state.aiCache[docKey][String(item.pointNum)], source: 'ai' };
+  }
+  const lawDoc = state.lawDocuments[docKey];
+  if(lawDoc && item.pointNum !== Infinity){
+    const pointNumStr = String(item.pointNum);
+    if(lawDoc.points.has(pointNumStr)) return { text: lawDoc.points.get(pointNumStr), source: 'parser' };
+    const intStr = String(Math.floor(item.pointNum));
+    if(lawDoc.points.has(intStr)) return { text: lawDoc.points.get(intStr), source: 'parser' };
+    for(const [k, v] of lawDoc.points.entries()){
+      if(parseFloat(k) === item.pointNum) return { text: v, source: 'parser' };
+    }
+  }
+  return { text: null, source: null };
+}
+
+function parseExcelQuestionCell(rawText){
+  if(!rawText) return null;
+  const text = String(rawText);
+  const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  const optionRegex = /^(\*?)\s*([А-ЯA-Z])\s*[.)]\s*(.+)$/;
+  const options = [];
+  const questionLines = [];
+  let npaLine = null;
+  for(const line of lines){
+    const m = line.match(optionRegex);
+    if(m) options.push({ letter: m[2], text: m[3].trim(), correct: m[1] === '*' });
+    else if(looksLikeNpa(line)) npaLine = line;
+    else questionLines.push(line);
+  }
+  if(options.length === 0){
+    const optRegex = /(\*?)\s*([А-ЯA-Z])\s*[.)]\s*([^А-ЯA-Z]*?)(?=(?:\*?\s*[А-ЯA-Z]\s*[.)]|$))/g;
+    let m;
+    while((m = optRegex.exec(text)) !== null){
+      let optText = m[3].trim().replace(/\s*\*?\s*[А-ЯA-Z]\s*[.)].*$/s, '').trim();
+      if(optText) options.push({ letter: m[2], text: optText, correct: m[1] === '*' });
+    }
+    if(options.length > 0){
+      const firstOptIdx = text.search(/\*?\s*[А-ЯA-Z]\s*[.)]/);
+      if(firstOptIdx > 0) questionLines.push(text.slice(0, firstOptIdx).trim());
+    }
+  }
+  return { fullText: text, questionText: questionLines.join(' ').trim() || text, options, npaLine };
+}
+
+function groupBlocksByQuestions(blocks){
+  const qStarts = [];
+  blocks.forEach((b, i) => { if(isQuestionLine(b.text)) qStarts.push(i); });
+  if(qStarts.length === 0) return [];
+  const groups = [];
+  for(let g = 0; g < qStarts.length; g++){
+    const start = qStarts[g];
+    const end = g < qStarts.length - 1 ? qStarts[g + 1] : blocks.length;
+    const groupBlocks = blocks.slice(start, end);
+    let npa = null, npaBlockIdx = -1;
+    for(let i = groupBlocks.length - 1; i >= 0; i--){
+      const b = groupBlocks[i];
+      if(i === 0) continue;
+      if(isAnswerOption(b.text)) continue;
+      if(looksLikeNpa(b.text)){ npa = b.text.trim(); npaBlockIdx = b.idx; break; }
+    }
+    if(!npa){
+      for(let i = groupBlocks.length - 1; i >= 0; i--){
+        const b = groupBlocks[i];
+        if(i === 0) continue;
+        const extracted = extractNpaFromBlock(b.text);
+        if(extracted){ npa = extracted; npaBlockIdx = b.idx; break; }
+      }
+    }
+    if(!npa){
+      for(let i = groupBlocks.length - 1; i >= 0; i--){
+        const b = groupBlocks[i];
+        if(i === 0) continue;
+        if(isAnswerOption(b.text)) continue;
+        const t = b.text.trim();
+        if(NPA_START_MARKERS.some(m => m.test(t))){ npa = t; npaBlockIdx = b.idx; break; }
+      }
+    }
+    groups.push({ qBlockIdx: start, blockIndices: groupBlocks.map(b => b.idx), npa, npaBlockIdx });
+  }
+  return groups;
+}
+
+function parseLawTextToPoints(text){
+  const points = new Map();
+  if(!text) return points;
+  const normalized = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  const lines = normalized.split('\n');
+  const pointStartRe = /^(\d+(?:\.\d+)*)(?:[.)]\s+|\s+)/;
+  let currentPointNum = null;
+  let currentPointLines = [];
+  function saveCurrentPoint(){
+    if(currentPointNum !== null && currentPointLines.length > 0){
+      let txt = currentPointLines.join('\n').trim().replace(/[ \t]+/g, ' ');
+      if(txt.length > 0) points.set(currentPointNum, txt);
+    }
+  }
+  for(const line of lines){
+    const trimmed = line.trim();
+    if(!trimmed){
+      if(currentPointNum !== null) currentPointLines.push('');
+      continue;
+    }
+    const m = trimmed.match(pointStartRe);
+    if(m){
+      saveCurrentPoint();
+      currentPointNum = m[1];
+      currentPointLines = [trimmed];
+    } else {
+      if(currentPointNum !== null) currentPointLines.push(trimmed);
+    }
+  }
+  saveCurrentPoint();
+  return points;
+}
+
+async function extractTextFromFile(file){
+  const ext = file.name.toLowerCase().split('.').pop();
+  if(ext === 'docx' || ext === 'doc'){
+    const buf = await file.arrayBuffer();
+    const result = await mammoth.extractRawText({arrayBuffer: buf});
+    return result.value;
+  }
+  if(ext === 'pdf'){
+    if(typeof pdfjsLib === 'undefined') throw new Error('Библиотека PDF не загружена');
+    const buf = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({data: buf}).promise;
+    let fullText = '';
+    for(let i = 1; i <= pdf.numPages; i++){
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      fullText += content.items.map(it => it.str).join(' ') + '\n\n';
+    }
+    return fullText;
+  }
+  if(ext === 'txt') return await file.text();
+  throw new Error('Неподдерживаемый формат: ' + ext);
+}
+
+async function loadLawForGroup(groupIdx, file){
+  const group = state.sortedGroups[groupIdx];
+  if(!group) return;
+  const docKey = group.docName;
+  const statusEl = document.querySelector(`[data-law-status="${groupIdx}"]`);
+  try {
+    if(statusEl){
+      statusEl.innerHTML = '<span class="loader"></span>Извлечение текста...';
+      statusEl.className = 'law-status';
+    }
+    const text = await extractTextFromFile(file);
+    applyLawText(docKey, text, file.name);
+  } catch(e) {
+    if(statusEl){
+      statusEl.innerHTML = `❌ Ошибка: ${escapeHtml(e.message)}`;
+      statusEl.className = 'law-status';
+    }
+  }
+}
+
+function loadLawFromText(groupIdx, text){
+  const group = state.sortedGroups[groupIdx];
+  if(!group) return;
+  applyLawText(group.docName, text, 'Вставленный текст');
+}
+
+function applyLawText(docKey, text, sourceName){
+  const gi = state.sortedGroups.findIndex(g => g.docName === docKey);
+  const statusEl = document.querySelector(`[data-law-status="${gi}"]`);
+  const points = parseLawTextToPoints(text);
+  state.lawDocuments[docKey] = {
+    text: text, points: points, fileName: sourceName,
+    loadedAt: new Date().toISOString()
+  };
+  $('stLaws').textContent = Object.keys(state.lawDocuments).length;
+  if(statusEl){
+    statusEl.innerHTML = `✅ <b>${escapeHtml(sourceName)}</b> · Пунктов: <b>${points.size}</b> · Недостающие найдёт ИИ ✨`;
+    statusEl.className = 'law-status loaded';
+  }
+  renderSortedGroups();
+  updateSortStats();
+}
+
+$('excelFile').addEventListener('change', async e => {
+  const file = e.target.files[0];
+  if(!file) return;
+  $('excelName').textContent = file.name;
+  $('excelDrop').classList.add('loaded');
+  const buf = await file.arrayBuffer();
+  const wb = XLSX.read(buf, {type:'array'});
+  const ws = wb.Sheets[wb.SheetNames[0]];
+  const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+  if(rows.length < 2){ setStatus($('excelStatus'),'Файл пуст','err'); return; }
+  const headers = rows[0];
+  const sel = $('colSelect');
+  sel.innerHTML = '';
+  headers.forEach((h,i) => {
+    const opt = document.createElement('option');
+    opt.value = i; opt.textContent = `Колонка ${i+1}: ${h || '(без имени)'}`;
+    sel.appendChild(opt);
+  });
+  sel.disabled = false;
+  let bestCol = 0, bestLen = 0;
+  for(let c=0;c<headers.length;c++){
+    let total = 0;
+    for(let r=1;r<Math.min(rows.length,20);r++) total += String(rows[r][c]||'').length;
+    if(total > bestLen){ bestLen = total; bestCol = c; }
+  }
+  sel.value = bestCol;
+  parseQuestions(rows, bestCol);
+  sel.onchange = () => parseQuestions(rows, +sel.value);
+});
+
+function parseQuestions(rows, col){
+  state.questions = [];
+  for(let r=1; r<rows.length; r++){
+    const raw = rows[r][col];
+    if(raw === undefined || raw === null || String(raw).trim() === '') continue;
+    const parsed = parseExcelQuestionCell(String(raw));
+    if(!parsed) continue;
+    state.questions.push({
+      idx: r + 1, fullText: String(raw),
+      questionText: parsed.questionText,
+      options: parsed.options, rawNpa: parsed.npaLine
+    });
+  }
+  $('stQ').textContent = state.questions.length;
+  const withOpts = state.questions.filter(q => q.options.length > 0).length;
+  setStatus($('excelStatus'),
+    `✅ Загружено вопросов: <b>${state.questions.length}</b> | С вариантами: <b>${withOpts}</b>`, 'ok');
+  checkReady();
+}
+
+$('wordFile').addEventListener('change', async e => {
+  const file = e.target.files[0];
+  if(!file) return;
+  $('wordName').textContent = file.name;
+  $('wordDrop').classList.add('loaded');
+  const buf = await file.arrayBuffer();
+  const result = await mammoth.convertToHtml({arrayBuffer: buf});
+  const html = result.value;
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html;
+  const blocks = [];
+  tmp.querySelectorAll('p,h1,h2,h3,h4,h5,h6,li,div').forEach(node => {
+    const text = (node.innerText || node.textContent || '').trim();
+    if(!text || text.length < 3) return;
+    const hasBold = /<(b|strong)\b/i.test(node.innerHTML) || /^H[1-6]$/.test(node.tagName);
+    blocks.push({ idx: blocks.length, text, bold: hasBold });
+  });
+  state.wordBlocks = blocks;
+  $('stW').textContent = blocks.length;
+  state.questionGroups = groupBlocksByQuestions(blocks);
+  $('stGroups').textContent = state.questionGroups.length;
+  const withNpa = state.questionGroups.filter(g => g.npa).length;
+  setStatus($('mappingStatus'),
+    `✅ Блоков: <b>${blocks.length}</b> | Групп: <b>${state.questionGroups.length}</b> | С НПА: <b style="color:var(--npa)">${withNpa}</b>`,
+    withNpa > 0 ? 'ok' : 'warn');
+  $('wordDebugCard').style.display = 'block';
+  state.debugFilter = 'first30';
+  renderDebug();
+  checkReady();
+});
+
+function renderDebug(){
+  const dbg = $('debugBox');
+  let html = '';
+  if(state.debugFilter === 'missed'){
+    html = `<b>⚠ Группы без НПА (${state.questionGroups.filter(g=>!g.npa).length}):</b><br><br>`;
+    const missed = state.questionGroups.filter(g => !g.npa);
+    if(missed.length === 0) html += `<span class="hit">✅ Все группы имеют НПА!</span>`;
+    else {
+      missed.forEach(g => {
+        const qBlock = state.wordBlocks[g.qBlockIdx];
+        html += `<div class="block-item" style="border-left-color:var(--warn)">`;
+        html += `<span class="tag q">ГРУППА #${state.questionGroups.indexOf(g)}</span>`;
+        html += `<b>Вопрос:</b> ${escapeHtml(qBlock.text.slice(0, 150))}<br>`;
+        html += `<span class="miss">НПА не найден. Блоков: ${g.blockIndices.length}</span><br>`;
+        g.blockIndices.forEach(bi => {
+          const b = state.wordBlocks[bi];
+          html += `<div class="block-item" data-idx="${b.idx}" style="margin:4px 0;padding:6px 8px">`;
+          html += `<span class="idx">[#${bi}]</span>${escapeHtml(b.text.slice(0, 400))}`;
+          if(b.text.length > 400) html += '…';
+          html += `</div>`;
+        });
+        html += `</div>`;
+      });
+    }
+    dbg.innerHTML = html;
+    attachBlockClickHandlers(dbg);
+    return;
+  }
+  const blocksToShow = state.debugFilter === 'all' ? state.wordBlocks : state.wordBlocks.slice(0, 30);
+  html = `<b>📊 Показано блоков: ${blocksToShow.length}</b><br><br>`;
+  blocksToShow.forEach(b => {
+    const isQ = isQuestionLine(b.text);
+    const isNpa = looksLikeNpa(b.text);
+    const isAns = isAnswerOption(b.text);
+    let tag, cls, blockCls;
+    if(isQ){ tag='❓ ВОПРОС'; cls='q'; blockCls=''; }
+    else if(isNpa){ tag='📜 НПА'; cls='npa'; blockCls='is-npa'; }
+    else if(isAns){ tag='🔤 ОТВЕТ'; cls='ans'; blockCls=''; }
+    else { tag='📝 ТЕКСТ'; cls='other'; blockCls=''; }
+    html += `<div class="block-item ${blockCls}" data-idx="${b.idx}">`;
+    html += `<span class="idx">[#${b.idx}]</span><span class="tag ${cls}">${tag}</span>`;
+    html += escapeHtml(b.text.slice(0, 400));
+    if(b.text.length > 400) html += '…';
+    html += `</div>`;
+  });
+  dbg.innerHTML = html;
+  attachBlockClickHandlers(dbg);
+}
+
+function attachBlockClickHandlers(container){
+  container.querySelectorAll('.block-item[data-idx]').forEach(el => {
+    el.addEventListener('click', () => {
+      const idx = +el.dataset.idx;
+      const block = state.wordBlocks[idx];
+      if(!block) return;
+      const group = state.questionGroups.find(g => g.blockIndices.includes(idx));
+      if(group){
+        group.npa = block.text;
+        group.npaBlockIdx = idx;
+        for(const qi in state.mapping){
+          if(state.mapping[qi].wi === state.questionGroups.indexOf(group)){
+            state.mapping[qi].npa = block.text;
+            state.npaByQuestion[qi] = block.text;
+          }
+        }
+        const npaCount = Object.keys(state.npaByQuestion).length;
+        $('stNpa').textContent = npaCount;
+        renderDebug();
+        if(Object.keys(state.mapping).length > 0){
+          renderResults(); renderNpaRegistry(); renderFinalTable();
+        }
+        setStatus($('mappingStatus'), `✅ НПА назначен. Всего: <b style="color:var(--npa)">${npaCount}</b>`, 'ok');
+      }
+    });
+  });
+}
+
+$('showFirst30').onclick = () => { state.debugFilter='first30'; renderDebug(); };
+$('showAllBlocks').onclick = () => { state.debugFilter='all'; renderDebug(); };
+$('showOnlyMissed').onclick = () => { state.debugFilter='missed'; renderDebug(); };
+$('threshold').addEventListener('input', e => {
+  state.threshold = +e.target.value;
+  $('thresholdVal').textContent = state.threshold + '%';
+});
+function checkReady(){
+  $('runMapping').disabled = !(state.questions.length && state.wordBlocks.length);
+}
+
+$('runMapping').addEventListener('click', async () => {
+  $('mappingLoader').style.display = 'inline-block';
+  $('runMapping').disabled = true;
+  await new Promise(r => setTimeout(r, 50));
+  const threshold = state.threshold / 100;
+  const qTok = state.questions.map(q => tokenize(q.questionText));
+  const wCandidates = state.questionGroups.map(g => state.wordBlocks[g.qBlockIdx]);
+  const wTok = wCandidates.map(w => tokenize(w.text));
+  const candidates = [];
+  for(let qi = 0; qi < qTok.length; qi++){
+    for(let wi = 0; wi < wTok.length; wi++){
+      const score = cosineSim(qTok[qi], wTok[wi]);
+      if(score >= threshold) candidates.push({ qi, wi, score });
+    }
+  }
+  candidates.sort((a, b) => b.score - a.score);
+  const usedQ = new Set(), usedW = new Set();
+  const mapping = {};
+  for(const c of candidates){
+    if(usedQ.has(c.qi) || usedW.has(c.wi)) continue;
+    const group = state.questionGroups[c.wi];
+    mapping[c.qi] = { wi: c.wi, score: c.score, npa: group ? group.npa : null, wordBlockIdx: wCandidates[c.wi].idx };
+    usedQ.add(c.qi); usedW.add(c.wi);
+  }
+  state.mapping = mapping;
+  $('stM').textContent = Object.keys(mapping).length;
+  state.npaByQuestion = {};
+  let npaFoundCount = 0;
+  for(const qi in mapping){
+    const npa = mapping[qi].npa;
+    if(npa){ state.npaByQuestion[qi] = npa; npaFoundCount++; }
+  }
+  $('stNpa').textContent = npaFoundCount;
+  $('mappingLoader').style.display = 'none';
+  $('runMapping').disabled = false;
+  setStatus($('mappingStatus'),
+    `✅ Мэппинг: <b>${Object.keys(mapping).length}</b> вопросов. НПА: <b style="color:var(--npa)">${npaFoundCount}</b>.`,
+    npaFoundCount > 0 ? 'ok' : 'warn');
+  renderResults(); renderNpaRegistry(); renderFinalTable();
+  $('resultsCard').style.display = 'block';
+  $('npaRegistryCard').style.display = 'block';
+  $('finalCard').style.display = 'block';
+  document.querySelectorAll('.step')[1].classList.add('done');
+  setTimeout(() => {
+    if(Object.keys(state.mapping).length > 0){
+      $('sortCard').style.display = 'block';
+      document.querySelectorAll('.step')[2].classList.add('done');
+      document.querySelectorAll('.step')[3].classList.add('active');
+      runSortByNpa();
+    }
+  }, 200);
+});
+
+function renderResults(){
+  const tbody = $('resultsTable').querySelector('tbody');
+  tbody.innerHTML = '';
+  const wCandidates = state.questionGroups.map(g => state.wordBlocks[g.qBlockIdx]);
+  state.questions.forEach((q, qi) => {
+    const m = state.mapping[qi];
+    if(!m) return;
+    if(state.resultsFilter === 'noNpa' && state.npaByQuestion[qi]) return;
+    const tr = document.createElement('tr');
+    const block = wCandidates[m.wi];
+    const pct = Math.round(m.score*100);
+    const cls = pct >= 80 ? 'hi' : pct >= 65 ? 'md' : 'lo';
+    const justification = getJustification(qi);
+    const npaDisplay = justification
+      ? `<span class="npa-cell">📜 ${escapeHtml(justification.slice(0, 150))}${justification.length > 150 ? '…' : ''}</span>`
+      : `<span class="npa-cell empty">не распознан</span>`;
+    tr.innerHTML = `
+      <td><span class="q-num">№${q.idx}</span></td>
+      <td>${escapeHtml(q.questionText.slice(0, 150))}</td>
+      <td>${escapeHtml(block.text.slice(0, 120))}</td>
+      <td><span class="score ${cls}">${pct}%</span></td>
+      <td>${npaDisplay}</td>
+      <td><span class="badge ${justification ? 'free' : 'busy'}">${justification ? '✓' : '✗'}</span></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+$('filterNoNpa').onclick = () => { state.resultsFilter='noNpa'; renderResults(); };
+$('filterAll').onclick = () => { state.resultsFilter='all'; renderResults(); };
+
+function getUniqueNpaMap(){
+  const map = {};
+  for(const qi in state.npaByQuestion){
+    const fullNpa = state.npaByQuestion[qi];
+    const shortNpa = extractShortNpaName(fullNpa);
+    const prefix = extractNpaPrefix(fullNpa);
+    if(!shortNpa) continue;
+    if(!map[shortNpa]) map[shortNpa] = { count: 0, examples: [], prefixes: new Set() };
+    map[shortNpa].count++;
+    if(map[shortNpa].examples.length < 1) map[shortNpa].examples.push(fullNpa);
+    if(prefix) map[shortNpa].prefixes.add(prefix.trim());
+  }
+  return map;
+}
+
+function renderNpaRegistry(){
+  const list = $('npaRegistryList');
+  const map = getUniqueNpaMap();
+  const keys = Object.keys(map);
+  $('stUniqueNpa').textContent = keys.length;
+  $('regTotal').textContent = keys.length;
+  const filled = keys.filter(k => state.npaRegistry[k] && state.npaRegistry[k].trim()).length;
+  $('regFilled').textContent = filled;
+  $('regEmpty').textContent = keys.length - filled;
+  $('stRegistryFilled').textContent = filled;
+  if(keys.length === 0){
+    list.innerHTML = '<div style="color:var(--muted);padding:20px;text-align:center">Нет распознанных НПА</div>';
+    return;
+  }
+  const sorted = keys.sort((a, b) => {
+    const af = state.npaRegistry[a] ? 1 : 0;
+    const bf = state.npaRegistry[b] ? 1 : 0;
+    if(af !== bf) return af - bf;
+    return map[b].count - map[a].count;
+  });
+  let html = '';
+  sorted.forEach(shortNpa => {
+    const info = map[shortNpa];
+    const fullName = state.npaRegistry[shortNpa] || '';
+    if(state.registryFilter === 'empty' && fullName.trim()) return;
+    const prefixesStr = Array.from(info.prefixes).slice(0, 5).join(', ');
+    let previewHtml = '';
+    if(fullName.trim() && prefixesStr){
+      const examplePrefix = Array.from(info.prefixes)[0];
+      previewHtml = `<div class="preview">📝 Пример: <b>${escapeHtml(examplePrefix)}${escapeHtml(fullName.trim().slice(0, 120))}</b></div>`;
+    } else if(fullName.trim()){
+      previewHtml = `<div class="preview">📝 Обоснование: <b>${escapeHtml(fullName.trim().slice(0, 120))}</b></div>`;
+    }
+    html += `<div class="npa-registry-item">`;
+    html += `<div class="short-name">📜 ${escapeHtml(shortNpa)}</div>`;
+    html += `<div class="count">Используется в <b>${info.count}</b> вопрос(ах)`;
+    if(prefixesStr) html += ` · Префиксы: <code style="background:var(--panel2);padding:2px 6px;border-radius:3px;color:var(--gold)">${escapeHtml(prefixesStr)}</code>`;
+    html += `</div>`;
+    if(info.examples[0]){
+      html += `<div class="example">Пример из Word: ${escapeHtml(info.examples[0].slice(0, 300))}</div>`;
+    }
+    html += `<input type="text" placeholder="Введите наименование в РОДИТЕЛЬНОМ падеже" data-short-input="${escapeHtml(shortNpa)}" value="${escapeHtml(fullName)}">`;
+    if(fullName.trim()) html += `<span class="saved">✓ сохранено</span>`;
+    html += previewHtml;
+    html += `</div>`;
+  });
+  list.innerHTML = html;
+  list.querySelectorAll('input[data-short-input]').forEach(input => {
+    input.addEventListener('input', () => {
+      const shortNpa = input.dataset.shortInput;
+      state.npaRegistry[shortNpa] = input.value;
+      const map = getUniqueNpaMap();
+      const filled = Object.keys(map).filter(k => state.npaRegistry[k] && state.npaRegistry[k].trim()).length;
+      $('regFilled').textContent = filled;
+      $('regEmpty').textContent = Object.keys(map).length - filled;
+      $('stRegistryFilled').textContent = filled;
+      renderFinalTable(); renderResults();
+      if(state.sortedGroups.length > 0) runSortByNpa();
+    });
+    input.addEventListener('blur', () => renderNpaRegistry());
+  });
+}
+
+$('copyNpaRegistry').onclick = async () => {
+  const map = getUniqueNpaMap();
+  const lines = ['Короткое имя НПА\tПолное наименование (род. падеж)\tКол-во вопросов'];
+  Object.keys(map).forEach(shortNpa => {
+    lines.push(`${shortNpa}\t${state.npaRegistry[shortNpa] || ''}\t${map[shortNpa].count}`);
+  });
+  try{
+    await navigator.clipboard.writeText(lines.join('\n'));
+    const btn = $('copyNpaRegistry');
+    const orig = btn.textContent;
+    btn.textContent = '✓ Скопировано!';
+    setTimeout(() => btn.textContent = orig, 1500);
+  }catch(err){ alert('Ошибка: ' + err.message); }
+};
+
+$('exportNpaRegistryCsv').onclick = () => {
+  const map = getUniqueNpaMap();
+  const rows = [['Короткое имя НПА','Полное наименование (род. падеж)','Кол-во вопросов']];
+  Object.keys(map).forEach(shortNpa => {
+    rows.push([shortNpa, state.npaRegistry[shortNpa] || '', map[shortNpa].count]);
+  });
+  downloadFile(rows, 'npa_registry.csv', 'csv', 'exportStatus');
+};
+
+$('showOnlyEmpty').onclick = () => { state.registryFilter='empty'; renderNpaRegistry(); };
+$('showAllRegistry').onclick = () => { state.registryFilter='all'; renderNpaRegistry(); };
+
+function runSortByNpa(){
+  const docMap = new Map();
+  state.questions.forEach((q, qi) => {
+    const m = state.mapping[qi];
+    if(!m) return;
+    const justification = getJustification(qi);
+    if(!justification) return;
+    const fullNpa = state.npaByQuestion[qi];
+    const shortNpa = extractShortNpaName(fullNpa);
+    const fullName = state.npaRegistry[shortNpa];
+    const docKey = (fullName && fullName.trim()) ? fullName.trim() : (shortNpa || 'Без НПА');
+    const pointInfo = extractPointInfo(justification);
+    if(!docMap.has(docKey)) docMap.set(docKey, []);
+    docMap.get(docKey).push({
+      qi, qNum: q.idx, qText: q.questionText, justification,
+      pointNum: pointInfo.num, pointType: pointInfo.type, pointRaw: pointInfo.raw
+    });
+  });
+  const groups = [];
+  docMap.forEach((items, docName) => {
+    items.sort((a, b) => {
+      if(a.pointNum !== b.pointNum) return a.pointNum - b.pointNum;
+      return a.qNum - b.qNum;
+    });
+    groups.push({ docName, items });
+  });
+  groups.sort((a, b) => a.docName.localeCompare(b.docName, 'ru'));
+  state.sortedGroups = groups;
+  $('stSorted').textContent = groups.length;
+  updateSortStats();
+  renderSortedGroups();
+  
+  // Показываем карточку курса
+  if(groups.length > 0){
+    $('courseCard').style.display = 'block';
+    document.querySelectorAll('.step')[5].classList.add('done');
+    document.querySelectorAll('.step')[6].classList.add('active');
+    renderCourseDocsSelector();
+  }
+}
+
+function updateSortStats(){
+  $('sortDocCount').textContent = state.sortedGroups.length;
+  let totalQ = 0, withParser = 0, withAi = 0, withManual = 0, missing = 0;
+  state.sortedGroups.forEach(g => {
+    totalQ += g.items.length;
+    g.items.forEach(item => {
+      const { text, source } = getPointTextWithSource(item);
+      if(source === 'parser') withParser++;
+      else if(source === 'ai') withAi++;
+      else if(source === 'manual') withManual++;
+      else if(!text) missing++;
+    });
+  });
+  $('sortQCount').textContent = totalQ;
+  $('sortWithParser').textContent = withParser;
+  $('sortWithAi').textContent = withAi;
+  $('sortWithManual').textContent = withManual;
+  $('sortMissing').textContent = missing;
+  $('stAiFound').textContent = withAi;
+}
+
+function renderSortedGroups(){
+  const container = $('sortedGroupsContainer');
+  if(state.sortedGroups.length === 0){
+    container.innerHTML = '<div style="color:var(--muted);padding:30px;text-align:center">Нет данных</div>';
+    return;
+  }
+  const collapsed = state.sortCollapsed;
+  let html = '';
+  state.sortedGroups.forEach((group, gi) => {
+    const lawDoc = state.lawDocuments[group.docName];
+    const hasLaw = !!lawDoc;
+    const lawPointsCount = hasLaw ? lawDoc.points.size : 0;
+    let groupParser = 0, groupAi = 0, groupManual = 0, groupMissing = 0;
+    group.items.forEach(item => {
+      const { source } = getPointTextWithSource(item);
+      if(source === 'parser') groupParser++;
+      else if(source === 'ai') groupAi++;
+      else if(source === 'manual') groupManual++;
+      else groupMissing++;
+    });
+    html += `<div class="npa-group" data-gi="${gi}">`;
+    html += `<div class="npa-group-header" data-toggle-gi="${gi}" style="cursor:pointer">`;
+    html += `<div class="npa-group-title">📜 ${escapeHtml(group.docName)}</div>`;
+    html += `<div class="npa-group-count">${group.items.length} вопр.</div>`;
+    html += `</div>`;
+    html += `<div class="npa-group-actions">`;
+    html += `<button class="law-btn sm" data-toggle-law-input="${gi}">📖 ${hasLaw ? 'Заменить текст закона' : 'Добавить текст закона'}</button>`;
+    html += `<span class="law-status ${hasLaw ? 'loaded' : ''}" data-law-status="${gi}">`;
+    if(hasLaw) html += `✅ <b>${escapeHtml(lawDoc.fileName)}</b> · Пунктов: <b>${lawPointsCount}</b>`;
+    else html += `⚠ Закон не добавлен`;
+    html += `</span>`;
+    if(hasLaw && groupMissing > 0) html += `<button class="ai-btn sm" data-ai-group="${gi}">🤖 Найти ${groupMissing} через ИИ</button>`;
+    html += `<button class="law-btn sm" data-export-word="${gi}">⬇ Скачать как Word</button>`;
+    html += `</div>`;
+    html += `<div class="law-input-pane" data-law-pane="${gi}" style="padding:12px 18px;background:var(--panel2);border-bottom:1px solid var(--border);display:none">`;
+    html += `<div class="law-input-tabs">`;
+    html += `<button class="active" data-law-tab="file" data-gi="${gi}">📁 Загрузить файл</button>`;
+    html += `<button data-law-tab="paste" data-gi="${gi}">📋 Вставить текст</button>`;
+    html += `</div>`;
+    html += `<div class="law-input-pane active" data-law-file-pane="${gi}">`;
+    html += `<label class="drop law-drop" style="padding:16px;margin:8px 0">`;
+    html += `📄 Word (.docx), PDF или TXT<br><small>Или скопируйте текст с сайта КонсультантПлюс/Гарант и вставьте на вкладке «Вставить текст»</small>`;
+    html += `<input type="file" accept=".docx,.pdf,.txt" data-law-input="${gi}" style="display:none">`;
+    html += `</label></div>`;
+    html += `<div class="law-input-pane" data-law-paste-pane="${gi}">`;
+    html += `<div class="hint-box" style="margin:8px 0">`;
+    html += `<b>💡 Как получить текст:</b><br>`;
+    html += `1. Откройте <b>consultant.ru</b> или <b>garant.ru</b> или <b>pravo.gov.ru</b><br>`;
+    html += `2. Найдите нужный НПА по названию<br>`;
+    html += `3. Выделите весь текст (Ctrl+A) и скопируйте (Ctrl+C)<br>`;
+    html += `4. Вставьте в поле ниже (Ctrl+V) и нажмите «Применить»`;
+    html += `</div>`;
+    html += `<textarea data-law-textarea="${gi}" placeholder="Вставьте сюда текст закона целиком..." style="min-height:150px;margin:8px 0"></textarea>`;
+    html += `<div style="display:flex;gap:8px">`;
+    html += `<button class="law-btn sm" data-apply-law-text="${gi}">✅ Применить текст</button>`;
+    html += `<button class="ghost sm" data-clear-law-text="${gi}">🗑 Очистить</button>`;
+    html += `</div></div></div>`;
+    if(hasLaw){
+      html += `<div style="padding:6px 18px;font-size:11px;color:var(--muted);background:var(--panel2);border-bottom:1px solid var(--border);display:flex;gap:12px;flex-wrap:wrap">`;
+      html += `<span><span class="source-badge parser">ПАРСЕР</span> ${groupParser}</span>`;
+      html += `<span><span class="source-badge ai">ИИ</span> ${groupAi}</span>`;
+      html += `<span><span class="source-badge manual">ВРУЧНУЮ</span> ${groupManual}</span>`;
+      if(groupMissing > 0) html += `<span><span class="source-badge notfound">НЕ НАЙДЕНО</span> ${groupMissing}</span>`;
+      html += `</div>`;
+    }
+    html += `<div class="npa-group-body" style="display:${collapsed ? 'none' : 'block'}">`;
+    group.items.forEach(item => {
+      const { text: pointText, source } = getPointTextWithSource(item);
+      let sourceLabel = '', lawTextClass = '', lawLabelClass = '', lawLabel = '';
+      if(source === 'parser'){
+        sourceLabel = '<span class="source-badge parser">ПАРСЕР</span>';
+        lawLabelClass = 'parser';
+        lawLabel = `📖 Пункт ${escapeHtml(item.pointRaw)} (найдено парсером)`;
+      } else if(source === 'ai'){
+        sourceLabel = '<span class="source-badge ai">ИИ</span>';
+        lawTextClass = 'ai-found';
+        lawLabelClass = 'ai';
+        lawLabel = `🤖 Пункт ${escapeHtml(item.pointRaw)} (найдено ИИ)`;
+      } else if(source === 'manual'){
+        sourceLabel = '<span class="source-badge manual">ВРУЧНУЮ</span>';
+        lawTextClass = 'manual';
+        lawLabelClass = 'manual';
+        lawLabel = `✏️ Пункт ${escapeHtml(item.pointRaw)} (введено вручную)`;
+      }
+      html += `<div class="npa-question" data-qi="${item.qi}">`;
+      html += `<div class="npa-question-grid">`;
+      html += `<div class="q-meta">`;
+      html += `<span class="q-num">№${item.qNum}</span>`;
+      if(item.pointNum !== Infinity) html += `<span class="point-num" title="${escapeHtml(item.pointType)}">${escapeHtml(item.pointRaw)}</span>`;
+      html += `</div><div>`;
+      html += `<div class="q-text">${escapeHtml(item.qText)} ${sourceLabel}</div>`;
+      html += `<div class="q-just"><b>Обоснование:</b> ${escapeHtml(item.justification)}</div>`;
+      if(pointText) html += `<div class="q-law-text ${lawTextClass}"><span class="law-label ${lawLabelClass}">${lawLabel}</span>\n${escapeHtml(pointText)}</div>`;
+      else if(hasLaw) html += `<div class="q-law-text missing">⚠ Пункт ${escapeHtml(item.pointRaw)} не найден парсером</div>`;
+      html += `<div class="q-actions">`;
+      if(hasLaw && !pointText) html += `<button class="ai-btn xs" data-ai-point-qi="${item.qi}">🤖 Найти через ИИ</button>`;
+      else if(hasLaw && pointText && source !== 'manual') html += `<button class="ghost xs" data-ai-point-qi="${item.qi}">🔄 Переспросить ИИ</button>`;
+      html += `<button class="ghost xs" data-manual-toggle-qi="${item.qi}">✏️ ${source === 'manual' ? 'Редактировать вручную' : 'Ввести вручную'}</button>`;
+      if(source) html += `<button class="ghost xs" data-clear-point-qi="${item.qi}">🗑 Очистить</button>`;
+      html += `</div>`;
+      html += `<div class="manual-input-area ${source === 'manual' ? 'active' : ''}" data-manual-area-qi="${item.qi}">`;
+      html += `<label style="font-size:11px;margin:6px 0 4px">Введите полный текст пункта ${escapeHtml(item.pointRaw)}:</label>`;
+      html += `<textarea data-manual-input-qi="${item.qi}" placeholder="Вставьте текст пункта из закона...">${source === 'manual' ? escapeHtml(pointText || '') : ''}</textarea>`;
+      html += `<div style="margin-top:6px;display:flex;gap:6px">`;
+      html += `<button class="success xs" data-manual-save-qi="${item.qi}">💾 Сохранить</button>`;
+      html += `<button class="ghost xs" data-manual-cancel-qi="${item.qi}">Отмена</button>`;
+      html += `</div></div>`;
+      html += `</div></div></div>`;
+    });
+    html += `</div></div>`;
+  });
+  container.innerHTML = html;
+  container.querySelectorAll('[data-toggle-gi]').forEach(header => {
+    header.addEventListener('click', () => {
+      const body = header.parentElement.querySelector('.npa-group-body');
+      body.style.display = body.style.display === 'none' ? 'block' : 'none';
+    });
+  });
+  container.querySelectorAll('[data-toggle-law-input]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const gi = +btn.dataset.toggleLawInput;
+      const pane = document.querySelector(`[data-law-pane="${gi}"]`);
+      pane.style.display = pane.style.display === 'none' ? 'block' : 'none';
+    });
+  });
+  container.querySelectorAll('[data-law-tab]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const gi = +btn.dataset.gi;
+      const tab = btn.dataset.lawTab;
+      const parent = btn.parentElement;
+      parent.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const filePane = document.querySelector(`[data-law-file-pane="${gi}"]`);
+      const pastePane = document.querySelector(`[data-law-paste-pane="${gi}"]`);
+      if(tab === 'file'){
+        filePane.classList.add('active');
+        pastePane.classList.remove('active');
+      } else {
+        filePane.classList.remove('active');
+        pastePane.classList.add('active');
+      }
+    });
+  });
+  container.querySelectorAll('[data-law-input]').forEach(input => {
+    input.addEventListener('change', async (e) => {
+      const gi = +input.getAttribute('data-law-input');
+      const file = e.target.files[0];
+      if(file) await loadLawForGroup(gi, file);
+    });
+  });
+  container.querySelectorAll('[data-apply-law-text]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const gi = +btn.dataset.applyLawText;
+      const textarea = document.querySelector(`[data-law-textarea="${gi}"]`);
+      const text = textarea.value.trim();
+      if(!text){ alert('Вставьте текст закона в поле'); return; }
+      loadLawFromText(gi, text);
+    });
+  });
+  container.querySelectorAll('[data-clear-law-text]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const gi = +btn.dataset.clearLawText;
+      const textarea = document.querySelector(`[data-law-textarea="${gi}"]`);
+      textarea.value = '';
+    });
+  });
+  container.querySelectorAll('[data-ai-group]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const gi = +btn.dataset.aiGroup;
+      findAllMissingViaAI(gi);
+    });
+  });
+  container.querySelectorAll('[data-ai-point-qi]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const qi = +btn.dataset.aiPointQi;
+      await findSinglePointViaAI(qi, btn);
+    });
+  });
+  container.querySelectorAll('[data-manual-toggle-qi]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const qi = +btn.dataset.manualToggleQi;
+      const area = document.querySelector(`[data-manual-area-qi="${qi}"]`);
+      area.classList.toggle('active');
+      const input = area.querySelector('textarea');
+      if(state.manualPointTexts[qi] && !input.value) input.value = state.manualPointTexts[qi];
+    });
+  });
+  container.querySelectorAll('[data-manual-save-qi]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const qi = +btn.dataset.manualSaveQi;
+      const input = document.querySelector(`[data-manual-input-qi="${qi}"]`);
+      const value = input.value.trim();
+      if(value){
+        state.manualPointTexts[qi] = value;
+        state.pointSources[qi] = 'manual';
+        renderSortedGroups();
+        updateSortStats();
+      }
+    });
+  });
+  container.querySelectorAll('[data-manual-cancel-qi]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const qi = +btn.dataset.manualCancelQi;
+      const area = document.querySelector(`[data-manual-area-qi="${qi}"]`);
+      area.classList.remove('active');
+    });
+  });
+  container.querySelectorAll('[data-clear-point-qi]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const qi = +btn.dataset.clearPointQi;
+      if(!confirm('Очистить текст пункта?')) return;
+      delete state.manualPointTexts[qi];
+      delete state.pointSources[qi];
+      const item = findItemByQi(qi);
+      if(item){
+        const fullNpa = state.npaByQuestion[qi];
+        if(fullNpa){
+          const shortNpa = extractShortNpaName(fullNpa);
+          const fullName = state.npaRegistry[shortNpa];
+          const docKey = (fullName && fullName.trim()) ? fullName.trim() : (shortNpa || '');
+          if(state.aiCache[docKey]) delete state.aiCache[docKey][String(item.pointNum)];
+        }
+      }
+      renderSortedGroups();
+      updateSortStats();
+    });
+  });
+  container.querySelectorAll('[data-export-word]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const gi = +btn.dataset.exportWord;
+      exportGroupToWord(gi);
+    });
+  });
+}
+
+function findItemByQi(qi){
+  for(const g of state.sortedGroups){
+    const item = g.items.find(it => it.qi === qi);
+    if(item) return item;
+  }
+  return null;
+}
+
+async function findSinglePointViaAI(qi, btn){
+  const item = findItemByQi(qi);
+  if(!item) return;
+  const fullNpa = state.npaByQuestion[qi];
+  const shortNpa = extractShortNpaName(fullNpa);
+  const fullName = state.npaRegistry[shortNpa];
+  const docKey = (fullName && fullName.trim()) ? fullName.trim() : (shortNpa || '');
+  const lawDoc = state.lawDocuments[docKey];
+  if(!lawDoc){ alert('Сначала загрузите текст закона'); return; }
+  const origText = btn.textContent;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="loader ai"></span>ИИ ищет...';
+  try {
+    if(state.aiCache[docKey]) delete state.aiCache[docKey][String(item.pointNum)];
+    const result = await findPointViaAI(docKey, item.pointNum, item.pointRaw);
+    if(result){
+      state.pointSources[qi] = 'ai';
+      renderSortedGroups();
+      updateSortStats();
+    } else {
+      alert(`ИИ не нашёл пункт ${item.pointRaw}. Попробуйте ввести вручную.`);
+      btn.disabled = false;
+      btn.textContent = origText;
+    }
+  } catch(e) {
+    alert('Ошибка ИИ: ' + (e.message || String(e)));
+    btn.disabled = false;
+    btn.textContent = origText;
+  }
+}
+
+$('runSort').onclick = () => {
+  runSortByNpa();
+  $('sortCard').scrollIntoView({behavior:'smooth'});
+};
+$('toggleSortCollapse').onclick = () => {
+  state.sortCollapsed = !state.sortCollapsed;
+  document.querySelectorAll('.npa-group-body').forEach(b => {
+    b.style.display = state.sortCollapsed ? 'none' : 'block';
+  });
+};
+
+async function exportGroupToWord(groupIdx){
+  const group = state.sortedGroups[groupIdx];
+  if(!group) return;
+  const statusEl = $('exportSortStatus');
+  statusEl.style.display = 'block';
+  statusEl.className = 'export-status';
+  statusEl.innerHTML = '<span class="loader"></span>Генерация Word-документа...';
+  try {
+    const { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType } = docx;
+    const children = [];
+    children.push(new Paragraph({
+      text: group.docName, heading: HeadingLevel.HEADING_1, spacing: { after: 300 }
+    }));
+    children.push(new Paragraph({
+      text: `Вопросов: ${group.items.length} · Дата: ${new Date().toLocaleDateString('ru-RU')}`,
+      spacing: { after: 400 }
+    }));
+    children.push(new Paragraph({ text: '═'.repeat(80), spacing: { after: 200 } }));
+    group.items.forEach((item, idx) => {
+      children.push(new Paragraph({
+        children: [
+          new TextRun({ text: `[${item.qNum}] `, bold: true, size: 24 }),
+          new TextRun({ text: item.qText, size: 24 })
+        ],
+        spacing: { before: 300, after: 100 }
+      }));
+      children.push(new Paragraph({
+        children: [
+          new TextRun({ text: 'Обоснование: ', bold: true, italics: true, color: '7C3AED', size: 22 }),
+          new TextRun({ text: item.justification, italics: true, color: '7C3AED', size: 22 })
+        ],
+        spacing: { after: 150 }
+      }));
+      const { text: lawText, source } = getPointTextWithSource(item);
+      if(lawText){
+        let label = 'Текст пункта', color = 'D97706';
+        if(source === 'parser'){ label = `Пункт ${item.pointRaw} (найдено парсером)`; color = 'D97706'; }
+        else if(source === 'ai'){ label = `Пункт ${item.pointRaw} (найдено ИИ)`; color = 'DB2777'; }
+        else if(source === 'manual'){ label = `Пункт ${item.pointRaw} (введено вручную)`; color = '059669'; }
+        children.push(new Paragraph({
+          children: [ new TextRun({ text: label + ':', bold: true, color: color, size: 22 }) ],
+          spacing: { before: 100, after: 50 }
+        }));
+        lawText.split('\n').filter(p => p.trim()).forEach(p => {
+          children.push(new Paragraph({
+            text: p.trim(), spacing: { after: 80 }, indent: { left: 360 }
+          }));
+        });
+      } else {
+        children.push(new Paragraph({
+          children: [ new TextRun({ text: `⚠ Пункт ${item.pointRaw} не найден`, italics: true, color: 'DC2626', size: 20 }) ],
+          spacing: { before: 100, after: 150 }
+        }));
+      }
+      if(idx < group.items.length - 1){
+        children.push(new Paragraph({
+          text: '─'.repeat(60),
+          spacing: { before: 200, after: 200 },
+          alignment: AlignmentType.CENTER
+        }));
+      }
+    });
+    const doc = new Document({ sections: [{ properties: {}, children }] });
+    const blob = await Packer.toBlob(doc);
+    let fileName = group.docName
+      .replace(/[«»"]/g, '').replace(/[\\/:*?"<>|]/g, '_')
+      .replace(/\s+/g, '_').slice(0, 80);
+    fileName = `Вопросы_${fileName}.docx`;
+    saveAs(blob, fileName);
+    statusEl.className = 'export-status ok';
+    statusEl.innerHTML = `✅ Документ <b>${escapeHtml(fileName)}</b> создан! Вопросов: <b>${group.items.length}</b>`;
+  } catch(e) {
+    statusEl.className = 'export-status err';
+    statusEl.innerHTML = `❌ Ошибка: <b>${escapeHtml(e.message)}</b>`;
+  }
+}
+
+$('exportAllDocsWord').onclick = async () => {
+  if(state.sortedGroups.length === 0){ alert('Нет данных для экспорта'); return; }
+  const statusEl = $('exportSortStatus');
+  statusEl.style.display = 'block';
+  statusEl.className = 'export-status';
+  statusEl.innerHTML = `<span class="loader"></span>Генерация ${state.sortedGroups.length} Word-документов...`;
+  for(let i = 0; i < state.sortedGroups.length; i++){
+    statusEl.innerHTML = `<span class="loader"></span>Документ ${i+1} из ${state.sortedGroups.length}...`;
+    await exportGroupToWord(i);
+    await new Promise(r => setTimeout(r, 500));
+  }
+  statusEl.className = 'export-status ok';
+  statusEl.innerHTML = `✅ Создано <b>${state.sortedGroups.length}</b> Word-документов!`;
+};
+
+function buildSortedRows(){
+  const headers = ['Документ (НПА)', '№ пункта', '№ вопроса', 'Текст вопроса', 'Обоснование', 'Текст пункта', 'Источник'];
+  const rows = [headers];
+  state.sortedGroups.forEach(group => {
+    group.items.forEach(item => {
+      const { text, source } = getPointTextWithSource(item);
+      rows.push([
+        group.docName,
+        item.pointNum !== Infinity ? item.pointRaw : '',
+        item.qNum, item.qText, item.justification,
+        text || '', source || ''
+      ]);
+    });
+  });
+  return rows;
+}
+
+$('exportSortedXlsx').onclick = () => {
+  if(state.sortedGroups.length === 0) runSortByNpa();
+  const rows = buildSortedRows();
+  downloadFile(rows, 'questions_sorted_by_npa.xlsx', 'xlsx', 'exportSortStatus');
+};
+
+function renderFinalTable(){
+  const tbody = $('finalTable').querySelector('tbody');
+  tbody.innerHTML = '';
+  state.questions.forEach((q, qi) => {
+    const m = state.mapping[qi];
+    if(!m) return;
+    const tr = document.createElement('tr');
+    const justification = getJustification(qi);
+    let optionsHtml = '';
+    if(q.options.length > 0){
+      optionsHtml = q.options.map(o => {
+        const prefix = o.correct ? '<b style="color:var(--accent2)">✓*</b> ' : '  ';
+        return `${prefix}${escapeHtml(o.letter)}. ${escapeHtml(o.text)}`;
+      }).join('<br>');
+    } else {
+      optionsHtml = '<span style="color:var(--muted)">нет вариантов</span>';
+    }
+    const npaStatus = justification 
+      ? `<span class="npa-cell">📜 ${escapeHtml(justification.slice(0, 150))}</span>`
+      : `<span class="npa-cell empty">НПА не указан</span>`;
+    tr.innerHTML = `
+      <td><span class="q-num">№${q.idx}</span></td>
+      <td><span class="badge npa">MC</span></td>
+      <td>${escapeHtml(q.questionText.slice(0, 200))}</td>
+      <td style="font-size:12px">${optionsHtml}</td>
+      <td>${npaStatus}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function downloadFile(rows, filename, format, statusElId){
+  const statusEl = statusElId ? $(statusElId) : null;
+  try {
+    if(!rows || rows.length <= 1){
+      if(statusEl){
+        statusEl.style.display = 'block';
+        statusEl.className = 'export-status err';
+        statusEl.innerHTML = '❌ Нет данных для экспорта.';
+      }
+      return false;
+    }
+    let blob;
+    if(format === 'xlsx'){
+      if(typeof XLSX === 'undefined') throw new Error('Библиотека XLSX не загружена');
+      const ws = XLSX.utils.aoa_to_sheet(rows);
+      ws['!cols'] = [{wch:60},{wch:12},{wch:12},{wch:80},{wch:80},{wch:80},{wch:12}];
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Вопросы по НПА');
+      const wbout = XLSX.write(wb, {bookType:'xlsx', type:'array', compression:true});
+      blob = new Blob([wbout], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    } else {
+      const csv = '\uFEFF' + rows.map(r =>
+        r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(';')
+      ).join('\r\n');
+      blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
+    }
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url; link.download = filename; link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    setTimeout(() => {
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }, 100);
+    if(statusEl){
+      statusEl.style.display = 'block';
+      statusEl.className = 'export-status ok';
+      statusEl.innerHTML = `✅ Файл <b>${filename}</b> сгенерирован! Строк: <b>${rows.length - 1}</b>.`;
+    }
+    return true;
+  } catch(e) {
+    if(statusEl){
+      statusEl.style.display = 'block';
+      statusEl.className = 'export-status err';
+      statusEl.innerHTML = `❌ Ошибка: <b>${escapeHtml(e.message)}</b>`;
+    }
+    return false;
+  }
+}
+
+function buildFinalRows(){
+  const headers = ['Тип вопроса','Текст вопроса','Рисунок','Видео','Аудио',
+    'Ответ 1','Ответ 2','Ответ 3','Ответ 4','Ответ 5','Ответ 6','Ответ 7','Ответ 8','Ответ 9','Ответ 10',
+    'Column2','Column3'];
+  const rows = [headers];
+  state.questions.forEach((q, qi) => {
+    const m = state.mapping[qi];
+    if(!m) return;
+    const justification = getJustification(qi);
+    const col2 = justification ? `Верно!\n\nОбоснование: ${justification}` : '';
+    const col3 = justification ? `К сожалению, ответ неверный.\n\nОбоснование: ${justification}` : '';
+    const answers = [];
+    for(let i = 0; i < 10; i++){
+      if(i < q.options.length){
+        const o = q.options[i];
+        answers.push((o.correct ? '*' : '') + o.text);
+      } else answers.push('');
+    }
+    rows.push(['MC', q.questionText, '', '', '', ...answers, col2, col3]);
+  });
+  return rows;
+}
+
+$('exportFinalXlsx').onclick = () => {
+  const rows = buildFinalRows();
+  downloadFile(rows, 'course_questions.xlsx', 'xlsx', 'exportStatus');
+};
+$('exportFinalCsv').onclick = () => {
+  const rows = buildFinalRows();
+  downloadFile(rows, 'course_questions.csv', 'csv', 'exportStatus');
+};
+$('copyFinalTsv').onclick = async () => {
+  const rows = buildFinalRows();
+  if(rows.length <= 1){ alert('Нет данных'); return; }
+  const tsv = rows.map(r => r.map(c => String(c).replace(/\t/g,' ').replace(/\n/g,' ')).join('\t')).join('\n');
+  try{
+    await navigator.clipboard.writeText(tsv);
+    const btn = $('copyFinalTsv');
+    const orig = btn.textContent;
+    btn.textContent = '✓ Скопировано!';
+    setTimeout(() => btn.textContent = orig, 1500);
+  }catch(err){ alert('Ошибка: ' + err.message); }
+};
+
+$('resetBtn').addEventListener('click', () => {
+  if(!confirm('Сбросить все данные?')) return;
+  state.questions = []; state.wordBlocks = []; state.questionGroups = [];
+  state.mapping = {}; state.npaByQuestion = {}; state.npaRegistry = {};
+  state.sortedGroups = []; state.lawDocuments = {};
+  state.aiCache = {}; state.manualPointTexts = {}; state.pointSources = {};
+  courseState.phase = 0;
+  courseState.approvedStructure = '';
+  courseState.generatedContent = '';
+  courseState.selectedDocs.clear();
+  courseState.knowledgeBase = [];
+  ['stQ','stW','stGroups','stM','stNpa','stUniqueNpa','stRegistryFilled','stSorted','stLaws','stAiFound','stCourseSlides'].forEach(id => $(id).textContent = '0');
+  ['excelName','wordName'].forEach(id => $(id).textContent = id==='excelName'?'Данные не загружены':'Файл не выбран');
+  $('excelDrop').classList.remove('loaded');
+  $('wordDrop').classList.remove('loaded');
+  $('colSelect').innerHTML = '<option>— загрузите файл —</option>';
+  $('colSelect').disabled = true;
+  ['excelStatus','mappingStatus','exportStatus','exportSortStatus','courseStatus'].forEach(id => $(id).style.display='none');
+  ['wordDebugCard','resultsCard','npaRegistryCard','finalCard','sortCard','courseCard','coursePhase1Result','coursePhase2Result'].forEach(id => $(id).style.display='none');
+  $('runMapping').disabled = true;
+  $('courseConfirmPhase2').disabled = true;
+  $('excelFile').value = ''; $('wordFile').value = '';
+  $('courseTopic').value = '';
+  $('coursePromptPreview').value = '';
+  $('courseStructureEditor').value = '';
+  $('courseContentOutput').innerHTML = '';
+  document.querySelectorAll('.step').forEach((s,i) => {
+    s.classList.remove('done');
+    if(i===0) s.classList.add('active'); else s.classList.remove('active');
+  });
+});
+
+['excelDrop','wordDrop'].forEach(id => {
+  const el = $(id);
+  el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('over'); });
+  el.addEventListener('dragleave', () => el.classList.remove('over'));
+  el.addEventListener('drop', e => { e.preventDefault(); el.classList.remove('over'); });
+});
+
+window.addEventListener('load', () => {
+  setTimeout(initAiStatus, 500);
+});
+</script>
+</body>
+</html>
