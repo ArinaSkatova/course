@@ -51,7 +51,7 @@ header .sub{color:var(--muted);font-size:13px;margin-top:4px}
 .stats .ai-stat b{color:var(--ai)}
 .stats .course-stat b{color:var(--course)}
 .pipeline{display:flex;gap:8px;padding:20px 32px;overflow-x:auto;border-bottom:1px solid var(--border);background:var(--panel2)}
-.step{flex:1;min-width:130px;padding:14px;border-radius:8px;background:var(--panel);border:1px solid var(--border);position:relative;box-shadow:var(--shadow)}
+.step{flex:1;min-width:120px;padding:14px;border-radius:8px;background:var(--panel);border:1px solid var(--border);position:relative;box-shadow:var(--shadow)}
 .step .num{position:absolute;top:-10px;left:12px;background:var(--accent);color:#fff;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
 .step .title{margin-top:8px;font-size:13px;font-weight:600;color:var(--text)}
 .step.active{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
@@ -263,10 +263,11 @@ details[open] summary{margin-bottom:10px;color:var(--text)}
   <div class="step active"><div class="num">1</div><div class="title">Импорт Excel</div></div>
   <div class="step"><div class="num">2</div><div class="title">Склейка (Word)</div></div>
   <div class="step"><div class="num">3</div><div class="title">Реестр НПА</div></div>
-  <div class="step"><div class="num">4</div><div class="title">Сортировка по НПА</div></div>
-  <div class="step"><div class="num">5</div><div class="title">Тексты законов</div></div>
-  <div class="step"><div class="num">6</div><div class="title">ИИ + Экспорт</div></div>
-  <div class="step"><div class="num">7</div><div class="title">🎓 Обучающий курс</div></div>
+  <div class="step"><div class="num">4</div><div class="title">Итоговая таблица</div></div>
+  <div class="step"><div class="num">5</div><div class="title">Сортировка по НПА</div></div>
+  <div class="step"><div class="num">6</div><div class="title">Тексты законов</div></div>
+  <div class="step"><div class="num">7</div><div class="title">ИИ + Экспорт</div></div>
+  <div class="step"><div class="num">8</div><div class="title">🎓 Обучающий курс</div></div>
 </nav>
 
 <main>
@@ -349,12 +350,34 @@ details[open] summary{margin-bottom:10px;color:var(--text)}
 
     <div class="npa-toolbar">
       <button class="ghost" id="copyNpaRegistry">📋 Копировать реестр</button>
-      <button class="npa-btn" id="exportNpaRegistryCsv">⬇ Экспорт реестра CSV</button>
       <button class="ghost" id="showOnlyEmpty">⚠ Только незаполненные</button>
       <button class="ghost" id="showAllRegistry">📄 Все</button>
     </div>
 
     <div id="npaRegistryList"></div>
+  </section>
+
+  <!-- 📊 ИТОГОВАЯ ТАБЛИЦА (перемещена перед Сортировкой) -->
+  <section class="card full" id="finalCard" style="display:none">
+    <h2>📊 Итоговая таблица для экспорта</h2>
+    <div class="npa-toolbar">
+      <button class="success" id="exportFinalXlsx">⬇ ЭКСПОРТ В EXCEL (.xlsx)</button>
+    </div>
+    <div id="exportStatus" class="export-status" style="display:none"></div>
+    <div style="overflow-x:auto;max-height:600px;overflow-y:auto">
+      <table id="finalTable">
+        <thead>
+          <tr>
+            <th>№</th>
+            <th>Тип</th>
+            <th>Текст вопроса</th>
+            <th>Ответы</th>
+            <th>Обоснование</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
   </section>
 
   <section class="card full" id="sortCard" style="display:none">
@@ -392,7 +415,6 @@ details[open] summary{margin-bottom:10px;color:var(--text)}
 
     <div style="display:flex;gap:10px;margin:12px 0;flex-wrap:wrap">
       <button class="sort-btn" id="runSort">🔄 Пересортировать</button>
-      <button class="success" id="exportSortedXlsx">⬇ Экспорт таблицы (.xlsx)</button>
       <button class="law-btn" id="exportAllDocsWord">⬇ СКАЧАТЬ ВСЕ ДОКУМЕНТЫ (.docx)</button>
       <button class="ghost" id="toggleSortCollapse">📂 Свернуть/развернуть все</button>
     </div>
@@ -402,31 +424,7 @@ details[open] summary{margin-bottom:10px;color:var(--text)}
     <div id="sortedGroupsContainer" style="max-height:800px;overflow-y:auto;margin-top:12px"></div>
   </section>
 
-  <section class="card full" id="finalCard" style="display:none">
-    <h2>📊 Итоговая таблица для экспорта</h2>
-    <div class="npa-toolbar">
-      <button class="success" id="exportFinalXlsx">⬇ ЭКСПОРТ В EXCEL (.xlsx)</button>
-      <button class="npa-btn" id="exportFinalCsv">⬇ ЭКСПОРТ CSV</button>
-      <button class="ghost" id="copyFinalTsv">📋 Копировать (TSV)</button>
-    </div>
-    <div id="exportStatus" class="export-status" style="display:none"></div>
-    <div style="overflow-x:auto;max-height:600px;overflow-y:auto">
-      <table id="finalTable">
-        <thead>
-          <tr>
-            <th>№</th>
-            <th>Тип</th>
-            <th>Текст вопроса</th>
-            <th>Ответы</th>
-            <th>Обоснование</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </div>
-  </section>
-
-  <!-- 🎓 ЭТАП 7: ОБУЧАЮЩИЙ КУРС -->
+  <!-- 🎓 ЭТАП 8: ОБУЧАЮЩИЙ КУРС -->
   <section class="card full" id="courseCard" style="display:none">
     <h2>🎓 Обучающий курс <span class="badge course">ИИ-методолог</span></h2>
     <p class="desc">Собирает все вопросы + пункты НПА в структурированный обучающий курс по модулям. ИИ работает в два этапа: сначала предлагает структуру, после вашего подтверждения — генерирует контент.</p>
@@ -708,19 +706,15 @@ async function callAiApi(userMessage, options = {}){
    🎓 ФУНКЦИИ ДЛЯ ОБУЧАЮЩЕГО КУРСА
    ========================================================= */
 
-/* Построение базы знаний из всех данных */
 function buildKnowledgeBase(selectedDocKeys){
   const entries = [];
-  
   state.sortedGroups.forEach(group => {
     if(selectedDocKeys && selectedDocKeys.size > 0 && !selectedDocKeys.has(group.docName)){
       return;
     }
-    
     group.items.forEach(item => {
       const { text: pointText, source } = getPointTextWithSource(item);
       if(!pointText) return;
-      
       entries.push({
         docName: group.docName,
         questionNum: item.qNum,
@@ -732,38 +726,30 @@ function buildKnowledgeBase(selectedDocKeys){
       });
     });
   });
-  
   return entries;
 }
 
-/* Обновление статистики базы знаний */
 function updateCourseKbStats(){
   const kb = courseState.knowledgeBase;
   $('courseKbTotal').textContent = kb.length;
   $('courseKbDocs').textContent = courseState.selectedDocs.size;
   $('courseKbQuestions').textContent = new Set(kb.map(e => e.questionNum)).size;
-  
   const maxPoints = +$('courseMaxPoints').value || 35;
   const estimatedModules = Math.ceil(kb.length / maxPoints);
   $('courseKbModules').textContent = estimatedModules;
 }
 
-/* Формирование промпта для Этапа 1 (структура) */
 function buildCoursePromptPhase1(){
   const topic = $('courseTopic').value.trim();
   if(!topic) throw new Error('Укажите тему курса');
-  
   const maxPoints = +$('courseMaxPoints').value || 35;
   const kb = courseState.knowledgeBase;
-  
   if(kb.length === 0) throw new Error('Нет данных для формирования курса. Загрузите тексты законов и найдите пункты.');
-  
   const docsMap = new Map();
   kb.forEach(entry => {
     if(!docsMap.has(entry.docName)) docsMap.set(entry.docName, []);
     docsMap.get(entry.docName).push(entry);
   });
-  
   let kbText = '';
   docsMap.forEach((entries, docName) => {
     kbText += `\n### Документ: ${docName}\n`;
@@ -776,7 +762,6 @@ function buildCoursePromptPhase1(){
       kbText += `     Текст НПА: "${pTextShort}${e.pointText.length > 200 ? '...' : ''}"\n`;
     });
   });
-  
   return `# РОЛЬ
 Ты — ведущий методолог по промышленной безопасности. Твоя задача — разработать обучающий курс на основе нормативно-правовых актов (НПА) для подготовки к аттестации Ростехнадзора.
 
@@ -821,20 +806,16 @@ ${kbText}
 Сформируй структуру курса.`;
 }
 
-/* Формирование промпта для Этапа 2 (контент) */
 function buildCoursePromptPhase2(){
   const topic = $('courseTopic').value.trim();
   const maxPoints = +$('courseMaxPoints').value || 35;
   const kb = courseState.knowledgeBase;
-  
   if(!courseState.approvedStructure) throw new Error('Сначала подтвердите структуру курса (Этап 1)');
-  
   const docsMap = new Map();
   kb.forEach(entry => {
     if(!docsMap.has(entry.docName)) docsMap.set(entry.docName, []);
     docsMap.get(entry.docName).push(entry);
   });
-  
   let kbText = '';
   docsMap.forEach((entries, docName) => {
     kbText += `\n### Документ: ${docName}\n`;
@@ -845,7 +826,6 @@ function buildCoursePromptPhase2(){
       kbText += `---\n`;
     });
   });
-  
   return `# РОЛЬ
 Ты — ведущий методолог по промышленной безопасности. Твоя задача — разработать обучающий курс на основе нормативно-правовых актов (НПА) для подготовки к аттестации Ростехнадзора.
 
@@ -902,20 +882,17 @@ ${kbText}
 Начинай генерацию.`;
 }
 
-/* Отправка в ИИ */
 async function sendCourseToAI(prompt, phase){
   const statusEl = $('courseStatus');
   statusEl.style.display = 'block';
   statusEl.className = 'status ai';
   statusEl.innerHTML = `<span class="loader course"></span>ИИ работает над ${phase === 1 ? 'структурой курса' : 'контентом курса'}... Это может занять 1-3 минуты.`;
-  
   try {
     const response = await callAiApi(prompt, {
       systemPrompt: 'Ты — ведущий методолог по промышленной безопасности. Создавай структурированные обучающие материалы на основе нормативно-правовых актов.',
       maxTokens: phase === 1 ? 4000 : 12000
     });
     const result = String(response).trim();
-    
     if(phase === 1){
       courseState.approvedStructure = result;
       courseState.phase = 1;
@@ -934,7 +911,6 @@ async function sendCourseToAI(prompt, phase){
       statusEl.innerHTML = `✅ Курс полностью сгенерирован! Можете экспортировать в Word или TXT.`;
       $('coursePhase2Result').scrollIntoView({behavior:'smooth', block:'start'});
     }
-    
     return result;
   } catch(e) {
     statusEl.className = 'status err';
@@ -943,25 +919,18 @@ async function sendCourseToAI(prompt, phase){
   }
 }
 
-/* Рендер контента курса (форматированный или сырой) */
 function renderCourseContent(content){
   const output = $('courseContentOutput');
-  
   if(courseState.viewMode === 'raw'){
     output.textContent = content;
     return;
   }
-  
-  // Форматированный вид
   output.innerHTML = '';
   const lines = content.split('\n');
   let currentModule = null;
-  
   lines.forEach(line => {
     const trimmed = line.trim();
     if(!trimmed) return;
-    
-    // Модуль
     if(/^#?\s*МОДУЛЬ\s+\d/i.test(trimmed) || /^#?\s*Модуль\s+\d/i.test(trimmed)){
       const moduleDiv = document.createElement('div');
       moduleDiv.className = 'course-module';
@@ -970,8 +939,6 @@ function renderCourseContent(content){
       currentModule = moduleDiv;
       return;
     }
-    
-    // Раздел
     if(/^##?\s*Раздел\s+\d/i.test(trimmed)){
       const container = currentModule || output;
       const div = document.createElement('div');
@@ -979,8 +946,6 @@ function renderCourseContent(content){
       container.appendChild(div);
       return;
     }
-    
-    // Слайд
     if(/^##?\s*Слайд\s+\d/i.test(trimmed) || /^###?\s*Слайд\s+\d/i.test(trimmed)){
       const container = currentModule || output;
       const slideDiv = document.createElement('div');
@@ -988,14 +953,11 @@ function renderCourseContent(content){
       slideDiv.innerHTML = `<div class="course-slide-title">${escapeHtml(trimmed.replace(/^#+\s*/, ''))}</div>`;
       container.appendChild(slideDiv);
       currentModule = container;
-      // Временно меняем currentModule для добавления содержимого слайда
       const origModule = currentModule;
       currentModule = slideDiv;
       setTimeout(() => { currentModule = origModule; }, 0);
       return;
     }
-    
-    // Цитата (текст НПА)
     if(trimmed.startsWith('>')){
       const container = currentModule || output;
       const div = document.createElement('div');
@@ -1004,8 +966,6 @@ function renderCourseContent(content){
       container.appendChild(div);
       return;
     }
-    
-    // Жирные строки (метаданные)
     if(trimmed.startsWith('**') && trimmed.includes('**', 2)){
       const container = currentModule || output;
       const div = document.createElement('div');
@@ -1014,8 +974,6 @@ function renderCourseContent(content){
       container.appendChild(div);
       return;
     }
-    
-    // Вопрос в кавычках
     if(/"\d+\./.test(trimmed) || /^\d+\.\s/.test(trimmed)){
       const container = currentModule || output;
       const div = document.createElement('div');
@@ -1024,8 +982,6 @@ function renderCourseContent(content){
       container.appendChild(div);
       return;
     }
-    
-    // Разделители
     if(/^[-─]{3,}$/.test(trimmed)){
       const container = currentModule || output;
       const div = document.createElement('div');
@@ -1034,8 +990,6 @@ function renderCourseContent(content){
       container.appendChild(div);
       return;
     }
-    
-    // Обычный текст
     const container = currentModule || output;
     const div = document.createElement('div');
     div.style.cssText = 'margin:4px 0;line-height:1.6';
@@ -1044,21 +998,18 @@ function renderCourseContent(content){
   });
 }
 
-/* Инициализация селектора документов */
 function renderCourseDocsSelector(){
   const container = $('courseDocsSelector');
   if(state.sortedGroups.length === 0){
     container.innerHTML = '<div style="color:var(--muted);font-size:12px">Сначала выполните мэппинг и сортировку по НПА</div>';
     return;
   }
-  
   courseState.selectedDocs.clear();
   let html = '';
   state.sortedGroups.forEach((group, i) => {
     const hasLaw = !!state.lawDocuments[group.docName];
     const questionsWithPoints = group.items.filter(it => getPointTextWithSource(it).text).length;
     const isAvailable = hasLaw && questionsWithPoints > 0;
-    
     html += `<label class="course-doc-item ${!isAvailable ? 'disabled' : ''}">`;
     html += `<input type="checkbox" data-course-doc="${i}" ${isAvailable ? 'checked' : ''} ${!isAvailable ? 'disabled' : ''} style="margin-top:3px;width:auto">`;
     html += `<div style="flex:1;min-width:0">`;
@@ -1067,12 +1018,9 @@ function renderCourseDocsSelector(){
     html += `Вопросов: <b>${group.items.length}</b> · С пунктами: <b style="color:var(--accent2)">${questionsWithPoints}</b>`;
     if(!hasLaw) html += ` · <span style="color:var(--warn)">⚠ Закон не загружен</span>`;
     html += `</div></div></label>`;
-    
     if(isAvailable) courseState.selectedDocs.add(group.docName);
   });
-  
   container.innerHTML = html;
-  
   container.querySelectorAll('[data-course-doc]').forEach(cb => {
     cb.addEventListener('change', () => {
       const gi = +cb.dataset.courseDoc;
@@ -1082,17 +1030,14 @@ function renderCourseDocsSelector(){
       refreshCourseKb();
     });
   });
-  
   refreshCourseKb();
 }
 
-/* Обновление базы знаний */
 function refreshCourseKb(){
   courseState.knowledgeBase = buildKnowledgeBase(courseState.selectedDocs);
   updateCourseKbStats();
 }
 
-/* Обработчики кнопок курса */
 $('courseSelectAll').onclick = () => {
   document.querySelectorAll('[data-course-doc]').forEach(cb => {
     if(!cb.disabled){
@@ -1136,7 +1081,6 @@ $('courseBuildPhase1').onclick = async () => {
 $('courseConfirmPhase2').onclick = async () => {
   const editedStructure = $('courseStructureEditor').value.trim();
   courseState.approvedStructure = editedStructure;
-  
   try {
     const prompt = buildCoursePromptPhase2();
     $('coursePromptPreview').value = prompt;
@@ -1202,7 +1146,6 @@ $('courseReset').onclick = () => {
   $('stCourseSlides').textContent = '0';
 };
 
-/* Экспорт курса в TXT */
 $('courseExportTxt').onclick = () => {
   const content = courseState.generatedContent;
   if(!content){
@@ -1223,26 +1166,20 @@ $('courseExportTxt').onclick = () => {
   }, 100);
 };
 
-/* Экспорт курса в Word */
 $('courseExportWord').onclick = async () => {
   const content = courseState.generatedContent;
   if(!content){
     alert('Сначала сгенерируйте контент');
     return;
   }
-  
   const statusEl = $('courseStatus');
   statusEl.style.display = 'block';
   statusEl.className = 'status';
   statusEl.innerHTML = '<span class="loader course"></span>Генерация Word-документа...';
-  
   try {
     const { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType } = docx;
     const topic = $('courseTopic').value.trim() || 'Обучающий курс';
-    
     const children = [];
-    
-    // Титульный слайд
     children.push(new Paragraph({
       text: 'ОБУЧАЮЩИЙ КУРС',
       heading: HeadingLevel.TITLE,
@@ -1261,17 +1198,12 @@ $('courseExportWord').onclick = async () => {
       spacing: { after: 600 }
     }));
     children.push(new Paragraph({ text: '═'.repeat(60), alignment: AlignmentType.CENTER, spacing: { after: 400 } }));
-    
-    // Разбираем контент по строкам
     const lines = content.split('\n');
     let moduleCount = 0;
     let slideCount = 0;
-    
     lines.forEach(line => {
       const trimmed = line.trim();
       if(!trimmed) return;
-      
-      // Заголовки модулей
       if(/^#?\s*МОДУЛЬ\s+\d/i.test(trimmed) || /^#?\s*Модуль\s+\d/i.test(trimmed)){
         moduleCount++;
         children.push(new Paragraph({
@@ -1280,7 +1212,6 @@ $('courseExportWord').onclick = async () => {
           spacing: { before: 400, after: 200 }
         }));
       }
-      // Заголовки разделов
       else if(/^##?\s*Раздел\s+\d/i.test(trimmed)){
         children.push(new Paragraph({
           text: trimmed.replace(/^#+\s*/, ''),
@@ -1288,7 +1219,6 @@ $('courseExportWord').onclick = async () => {
           spacing: { before: 300, after: 150 }
         }));
       }
-      // Заголовки слайдов
       else if(/^##?\s*Слайд\s+\d/i.test(trimmed) || /^###?\s*Слайд\s+\d/i.test(trimmed)){
         slideCount++;
         children.push(new Paragraph({
@@ -1297,7 +1227,6 @@ $('courseExportWord').onclick = async () => {
           spacing: { before: 250, after: 100 }
         }));
       }
-      // Цитаты (текст НПА)
       else if(trimmed.startsWith('>')){
         children.push(new Paragraph({
           text: trimmed.slice(1).trim(),
@@ -1307,7 +1236,6 @@ $('courseExportWord').onclick = async () => {
           border: { left: { style: 'single', size: 12, color: '8250DF', space: 10 } }
         }));
       }
-      // Жирные строки (метаданные)
       else if(trimmed.startsWith('**') && trimmed.endsWith('**')){
         children.push(new Paragraph({
           children: [
@@ -1316,7 +1244,6 @@ $('courseExportWord').onclick = async () => {
           spacing: { after: 80 }
         }));
       }
-      // Разделители
       else if(/^[-─]{3,}$/.test(trimmed)){
         children.push(new Paragraph({
           text: '─'.repeat(50),
@@ -1324,7 +1251,6 @@ $('courseExportWord').onclick = async () => {
           spacing: { before: 150, after: 150 }
         }));
       }
-      // Обычный текст
       else {
         children.push(new Paragraph({
           text: trimmed,
@@ -1332,17 +1258,13 @@ $('courseExportWord').onclick = async () => {
         }));
       }
     });
-    
     $('stCourseSlides').textContent = slideCount;
-    
     const doc = new Document({
       sections: [{ properties: {}, children }]
     });
-    
     const blob = await Packer.toBlob(doc);
     const fileName = `Курс_${topic.slice(0, 50).replace(/[\\/:*?"<>|]/g, '_')}.docx`;
     saveAs(blob, fileName);
-    
     statusEl.className = 'status ok';
     statusEl.innerHTML = `✅ Документ <b>${escapeHtml(fileName)}</b> создан! Модулей: <b>${moduleCount}</b>, слайдов: <b>${slideCount}</b>`;
   } catch(e) {
@@ -1353,13 +1275,12 @@ $('courseExportWord').onclick = async () => {
 };
 
 /* =========================================================
-   СУЩЕСТВУЮЩИЕ ФУНКЦИИ (сохранены без изменений)
+   СУЩЕСТВУЮЩИЕ ФУНКЦИИ
    ========================================================= */
 
 function buildLawPrompt(pointRaw, pointNum, lawText){
   let contextText = lawText;
   if(lawText.length > 80000) contextText = extractRelevantContext(lawText, pointNum);
-  
   return `Ты — эксперт по нормативно-правовым актам Российской Федерации. Твоя задача — ТОЧНО извлечь текст указанного пункта из документа.
 
 ═══════════════════════════════════════════════════
@@ -1452,12 +1373,10 @@ async function findPointViaAI(docKey, pointNum, pointRaw){
   const lawText = lawDoc.text;
   const prompt = buildLawPrompt(pointRaw, pointNum, lawText);
   console.log(`[ИИ] Запрос пункта ${pointRaw} для документа ${docKey.slice(0, 50)}...`);
-  
   try {
     const response = await callAiApi(prompt);
     let cleaned = String(response).trim();
     console.log(`[ИИ] Ответ для ${pointRaw}:`, cleaned.slice(0, 200));
-    
     const hallucinationMarkers = [
       /не могу найти/i, /не удалось найти/i,
       /в предоставленном тексте/i, /в данном документе/i,
@@ -1467,14 +1386,12 @@ async function findPointViaAI(docKey, pointNum, pointRaw){
     const isNotFound = /^NOT[_\s]?FOUND$/i.test(cleaned) 
       || (/не найден/i.test(cleaned) && cleaned.length < 50)
       || isHallucination;
-    
     const nextPointNum = pointNum + 1;
     const nextPointRegex = new RegExp(`^\\s*${nextPointNum}\\s*[.)]`, 'm');
     if(nextPointRegex.test(cleaned)){
       const cutMatch = cleaned.match(nextPointRegex);
       if(cutMatch) cleaned = cleaned.slice(0, cutMatch.index).trim();
     }
-    
     const result = isNotFound ? null : cleaned;
     if(!state.aiCache[docKey]) state.aiCache[docKey] = {};
     state.aiCache[docKey][cacheKey] = result;
@@ -2131,11 +2048,13 @@ $('runMapping').addEventListener('click', async () => {
   $('npaRegistryCard').style.display = 'block';
   $('finalCard').style.display = 'block';
   document.querySelectorAll('.step')[1].classList.add('done');
+  document.querySelectorAll('.step')[2].classList.add('done');
+  document.querySelectorAll('.step')[3].classList.add('done');
   setTimeout(() => {
     if(Object.keys(state.mapping).length > 0){
       $('sortCard').style.display = 'block';
-      document.querySelectorAll('.step')[2].classList.add('done');
-      document.querySelectorAll('.step')[3].classList.add('active');
+      document.querySelectorAll('.step')[4].classList.add('done');
+      document.querySelectorAll('.step')[4].classList.add('active');
       runSortByNpa();
     }
   }, 200);
@@ -2265,15 +2184,6 @@ $('copyNpaRegistry').onclick = async () => {
   }catch(err){ alert('Ошибка: ' + err.message); }
 };
 
-$('exportNpaRegistryCsv').onclick = () => {
-  const map = getUniqueNpaMap();
-  const rows = [['Короткое имя НПА','Полное наименование (род. падеж)','Кол-во вопросов']];
-  Object.keys(map).forEach(shortNpa => {
-    rows.push([shortNpa, state.npaRegistry[shortNpa] || '', map[shortNpa].count]);
-  });
-  downloadFile(rows, 'npa_registry.csv', 'csv', 'exportStatus');
-};
-
 $('showOnlyEmpty').onclick = () => { state.registryFilter='empty'; renderNpaRegistry(); };
 $('showAllRegistry').onclick = () => { state.registryFilter='all'; renderNpaRegistry(); };
 
@@ -2308,12 +2218,10 @@ function runSortByNpa(){
   $('stSorted').textContent = groups.length;
   updateSortStats();
   renderSortedGroups();
-  
-  // Показываем карточку курса
   if(groups.length > 0){
     $('courseCard').style.display = 'block';
-    document.querySelectorAll('.step')[5].classList.add('done');
-    document.querySelectorAll('.step')[6].classList.add('active');
+    document.querySelectorAll('.step')[6].classList.add('done');
+    document.querySelectorAll('.step')[7].classList.add('active');
     renderCourseDocsSelector();
   }
 }
@@ -2716,29 +2624,6 @@ $('exportAllDocsWord').onclick = async () => {
   statusEl.innerHTML = `✅ Создано <b>${state.sortedGroups.length}</b> Word-документов!`;
 };
 
-function buildSortedRows(){
-  const headers = ['Документ (НПА)', '№ пункта', '№ вопроса', 'Текст вопроса', 'Обоснование', 'Текст пункта', 'Источник'];
-  const rows = [headers];
-  state.sortedGroups.forEach(group => {
-    group.items.forEach(item => {
-      const { text, source } = getPointTextWithSource(item);
-      rows.push([
-        group.docName,
-        item.pointNum !== Infinity ? item.pointRaw : '',
-        item.qNum, item.qText, item.justification,
-        text || '', source || ''
-      ]);
-    });
-  });
-  return rows;
-}
-
-$('exportSortedXlsx').onclick = () => {
-  if(state.sortedGroups.length === 0) runSortByNpa();
-  const rows = buildSortedRows();
-  downloadFile(rows, 'questions_sorted_by_npa.xlsx', 'xlsx', 'exportSortStatus');
-};
-
 function renderFinalTable(){
   const tbody = $('finalTable').querySelector('tbody');
   tbody.innerHTML = '';
@@ -2847,22 +2732,6 @@ function buildFinalRows(){
 $('exportFinalXlsx').onclick = () => {
   const rows = buildFinalRows();
   downloadFile(rows, 'course_questions.xlsx', 'xlsx', 'exportStatus');
-};
-$('exportFinalCsv').onclick = () => {
-  const rows = buildFinalRows();
-  downloadFile(rows, 'course_questions.csv', 'csv', 'exportStatus');
-};
-$('copyFinalTsv').onclick = async () => {
-  const rows = buildFinalRows();
-  if(rows.length <= 1){ alert('Нет данных'); return; }
-  const tsv = rows.map(r => r.map(c => String(c).replace(/\t/g,' ').replace(/\n/g,' ')).join('\t')).join('\n');
-  try{
-    await navigator.clipboard.writeText(tsv);
-    const btn = $('copyFinalTsv');
-    const orig = btn.textContent;
-    btn.textContent = '✓ Скопировано!';
-    setTimeout(() => btn.textContent = orig, 1500);
-  }catch(err){ alert('Ошибка: ' + err.message); }
 };
 
 $('resetBtn').addEventListener('click', () => {
