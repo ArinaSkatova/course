@@ -1614,37 +1614,43 @@ function getJustification(qi){
   if(fullName && fullName.trim()) return (prefix + fullName.trim()).trim();
   return fullNpa;
 }
-
 function extractPointInfo(justification){
-  if(!justification) return { num: Infinity, type: 'unknown', raw: '' };
+  if(!justification) return { num: Infinity, type: 'unknown', raw: '', article: 0 };
   const t = justification.trim();
-  let m = t.match(/^п\.?\s*п?\.?\s*(\d+(?:\.\d+)?)/i);
-  if(m) return { num: parseFloat(m[1]), type: 'п.', raw: m[0] };
-  m = t.match(/^п\.?\s*(\d+(?:\.\d+)?)/i);
-  if(m) return { num: parseFloat(m[1]), type: 'п.', raw: m[0] };
-  m = t.match(/^ст\.?\s*(\d+)/i);
-  if(m) return { num: parseFloat(m[1]), type: 'ст.', raw: m[0] };
-  m = t.match(/^приложен[иеия]+\s*№?\s*(\d+)/i);
-  if(m) return { num: parseFloat(m[1]), type: 'Приложение', raw: m[0] };
-  m = t.match(/^глав[аы]?\s*([IVXLCDM]+)/i);
+  
+  // 1. Ищем Приложение (всегда в конце)
+  let m = t.match(/приложен[иеия]+\s*№?\s*(\d+)/i);
+  if(m) return { num: parseFloat(m[1]), type: 'Приложение', raw: m[0], article: 99999 };
+  
+  // 2. Ищем Статью (ст. X)
+  m = t.match(/ст\.?\s*(\d+)/i);
   if(m){
-    const roman = m[1].toUpperCase();
-    const romanMap = {'I':1,'V':5,'X':10,'L':50,'C':100,'D':500,'M':1000};
-    let num = 0;
-    for(let i=0;i<roman.length;i++){
-      const cur = romanMap[roman[i]]||0;
-      const next = romanMap[roman[i+1]]||0;
-      if(cur < next) num -= cur; else num += cur;
+    const articleNum = parseInt(m[1]);
+    let subNum = 0;
+    let type = 'ст.';
+    let raw = m[0];
+    
+    // Проверяем, есть ли перед статьей часть (ч. X) или пункт (п. X.Y)
+    const prefixMatch = t.match(/^(ч\.?\s*([\d.,\s]+)\s+|п\.?\s*([\d.]+)\s+)/i);
+    if(prefixMatch){
+      if(prefixMatch[2]){ // Если это "ч. 3, 4"
+        subNum = parseFloat(prefixMatch[2].split(',')[0].trim());
+        type = 'ч. ст.';
+        raw = prefixMatch[0].trim() + ' ' + m[0];
+      } else if(prefixMatch[3]){ // Если это "п. 2.7"
+        subNum = parseFloat(prefixMatch[3]);
+        type = 'п. ст.';
+        raw = prefixMatch[0].trim() + ' ' + m[0];
+      }
     }
-    return { num, type: 'глава', raw: m[0] };
+    return { num: articleNum, type: type, raw: raw, article: articleNum, subNum: subNum };
   }
-  m = t.match(/^раздел[аы]?\s*([IVXLCDM\d]+)/i);
-  if(m){
-    const s = m[1];
-    if(/^\d+$/.test(s)) return { num: parseInt(s), type: 'раздел', raw: m[0] };
-    return { num: 0, type: 'раздел', raw: m[0] };
-  }
-  return { num: Infinity, type: '—', raw: '' };
+  
+  // 3. Если статьи нет, ищем просто пункт (п. 553)
+  m = t.match(/п\.?\s*(\d+(?:\.\d+)?)/i);
+  if(m) return { num: parseFloat(m[1]), type: 'п.', raw: m[0], article: 0 };
+  
+  return { num: Infinity, type: '—', raw: '', article: 0 };
 }
 
 function getPointTextWithSource(item){
@@ -2208,9 +2214,13 @@ function runSortByNpa(){
   const groups = [];
   docMap.forEach((items, docName) => {
     items.sort((a, b) => {
-      if(a.pointNum !== b.pointNum) return a.pointNum - b.pointNum;
-      return a.qNum - b.qNum;
-    });
+  const keyA = parseNpaPoint(a.pointRaw || '');
+  const keyB = parseNpaPoint(b.pointRaw || '');
+  for(let i = 0; i < 4; i++){
+    if(keyA[i] !== keyB[i]) return keyA[i] - keyB[i];
+  }
+  return a.qNum - b.qNum;
+});
     groups.push({ docName, items });
   });
   groups.sort((a, b) => a.docName.localeCompare(b.docName, 'ru'));
@@ -2776,6 +2786,37 @@ $('resetBtn').addEventListener('click', () => {
 window.addEventListener('load', () => {
   setTimeout(initAiStatus, 500);
 });
+/* ===== УМНАЯ СОРТИРОВКА НПА ===== */
+function parseNpaPoint(pointStr) {
+    if (!pointStr) return [0, 0, 0, 0];
+    const str = String(pointStr).toLowerCase().trim();
+    
+    // Приложения — всегда в самом конце
+    const appMatch = str.match(/приложени[ея]\s*(?:№\s*)?(\d+)/);
+    if (appMatch) {
+        return [99999, parseInt(appMatch[1]), 0, 1];
+    }
+    
+    // Ищем номер статьи
+    const articleMatch = str.match(/ст\.?\s*(\d+)/);
+    const articleNum = articleMatch ? parseInt(articleMatch[1]) : 0;
+    
+    // Ищем номер части (ч.) или пункта (п.)
+    let subNum = 0;
+    const partMatch = str.match(/ч\.?\s*([\d.,\s]+)/i);
+    if (partMatch) {
+        // Берем первое число, если там "3, 4"
+        subNum = parseFloat(partMatch[1].split(',')[0].trim());
+    } else {
+        const pointMatch = str.match(/п\.?\s*(\d+(?:\.\d+)?)/i);
+        if (pointMatch) subNum = parseFloat(pointMatch[1]);
+    }
+    
+    // Возвращаем массив: [Статья, Часть/Пункт, 0, Тип]
+    return [articleNum, subNum, 0, 0];
+}
+
+/* ===== КОНЕЦ УМНОЙ СОРТИРОВКИ ===== */
 </script>
 </body>
 </html>
