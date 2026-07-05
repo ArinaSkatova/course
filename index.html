@@ -9,6 +9,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://unpkg.com/docx@8.5.0/build/index.umd.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/gitbrent/PptxGenJS@3.12.0/dist/pptxgen.bundle.js"></script>
 <style>
 :root{
 --bg:#ffffff;--panel:#ffffff;--panel2:#f6f8fa;--panel3:#eaeef2;
@@ -217,6 +218,18 @@ details[open] summary{margin-bottom:10px;color:var(--text)}
 .edit-justification-area .actions{display:flex;gap:6px;margin-top:6px}
 .no-point-warning{background:#ffebe9;border:1px solid #ff8182;border-radius:6px;padding:8px 12px;margin:8px 0;font-size:12px;color:#82071e}
 .no-point-warning b{color:#82071e}
+.presentation-preview{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:16px;max-height:500px;overflow-y:auto;margin-top:12px}
+.slide-card{background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:12px;margin:8px 0;box-shadow:var(--shadow)}
+.slide-card.divider{background:linear-gradient(90deg,#ddf4ff,var(--panel2));border-left:4px solid var(--sort)}
+.slide-card .slide-num{display:inline-block;background:var(--course);color:#fff;padding:2px 10px;border-radius:12px;font-weight:700;font-size:11px;margin-right:8px}
+.slide-card .slide-title{font-weight:600;color:var(--text);font-size:13px;margin-bottom:6px}
+.slide-card .slide-content{font-size:12px;color:var(--text-muted);line-height:1.5;white-space:pre-wrap;word-break:break-word;max-height:120px;overflow-y:auto;background:var(--panel);padding:8px;border-radius:4px;border:1px solid var(--border)}
+.slide-card .slide-refs{margin-top:8px;font-size:11px;color:var(--npa);font-family:'Consolas',monospace}
+.slide-card .slide-refs .ref-item{background:#fbefff;padding:4px 8px;border-radius:4px;margin:3px 0;border-left:3px solid var(--npa)}
+.python-code{background:#1e1e1e;color:#d4d4d4;font-family:'Consolas',monospace;font-size:12px;padding:16px;border-radius:8px;max-height:500px;overflow:auto;white-space:pre;line-height:1.5;border:1px solid #333}
+.theme-drop{border:2px dashed var(--border-strong);border-radius:8px;padding:20px;text-align:center;cursor:pointer;background:var(--panel2);transition:.15s}
+.theme-drop:hover,.theme-drop.over{border-color:var(--course);background:#dafbe1}
+.theme-drop.loaded{border-color:var(--accent2);background:#dafbe1}
 </style>
 </head>
 <body>
@@ -250,6 +263,7 @@ details[open] summary{margin-bottom:10px;color:var(--text)}
 <div class="step"><div class="num">6</div><div class="title">Тексты законов</div></div>
 <div class="step"><div class="num">7</div><div class="title">ИИ + Экспорт</div></div>
 <div class="step"><div class="num">8</div><div class="title">🎓 Обучающий курс</div></div>
+<div class="step"><div class="num">9</div><div class="title">📊 Презентация</div></div>
 </nav>
 <main>
 <section class="card">
@@ -441,6 +455,86 @@ details[open] summary{margin-bottom:10px;color:var(--text)}
 <div id="courseContentOutput" class="course-output"></div>
 </div>
 </section>
+<section class="card full" id="presentationCard" style="display:none">
+<h2>📊 Генерация презентации <span class="badge course">Python + PptxGenJS</span></h2>
+<p class="desc">Создаёт презентацию курса на основе сгенерированных модулей. Поддерживается загрузка темы оформления (.pptx/.potx) и два режима генерации.</p>
+
+<div class="hint-box course">
+<b>✨ Как это работает:</b><br>
+1. Загрузите <b>тему оформления</b> (.pptx или .potx) — необязательно, но рекомендуется<br>
+2. Нажмите <b>«Сгенерировать Python-код»</b> — получите готовый скрипт, который применит вашу тему идеально<br>
+3. Или нажмите <b>«Создать презентацию прямо здесь»</b> — мгновенная генерация .pptx в браузере (базовое оформление)<br>
+4. Все слайды идут <b>строго по порядку</b> курса, заметки содержат вопрос и пункт НПА
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0">
+<div>
+    <label>🎨 Тема оформления (необязательно)</label>
+    <label for="themeFile" class="theme-drop" id="themeDrop">
+        📄 Нажмите для выбора .pptx / .potx<br>
+        <small id="themeName">Без темы — будет использовано стандартное оформление</small>
+    </label>
+    <input type="file" id="themeFile" accept=".pptx,.potx" style="display:none">
+</div>
+<div>
+    <label>⚙️ Настройки</label>
+    <div style="display:flex;flex-direction:column;gap:8px">
+        <label style="text-transform:none;font-size:13px;color:var(--text);margin:0">
+            Размер заголовка (pt):
+            <input type="number" id="presTitleSize" value="28" min="16" max="54" style="width:80px;margin-left:8px">
+        </label>
+        <label style="text-transform:none;font-size:13px;color:var(--text);margin:0">
+            Размер текста (pt):
+            <input type="number" id="presTextSize" value="16" min="10" max="32" style="width:80px;margin-left:8px">
+        </label>
+        <label style="text-transform:none;font-size:13px;color:var(--text);margin:0;display:flex;align-items:center;gap:6px">
+            <input type="checkbox" id="presAddNotes" checked style="width:auto">
+            Добавлять заметки к слайдам
+        </label>
+    </div>
+</div>
+</div>
+
+<div class="course-stats" style="margin:14px 0">
+<div class="course-stat-card"><span class="num" id="presTotalSlides">0</span><span class="label">Всего слайдов</span></div>
+<div class="course-stat-card"><span class="num" id="presDividers">0</span><span class="label">Разделителей</span></div>
+<div class="course-stat-card"><span class="num" id="presContent">0</span><span class="label">Содержательных</span></div>
+<div class="course-stat-card"><span class="num" id="presWithRefs">0</span><span class="label">С привязкой к НПА</span></div>
+</div>
+
+<div style="display:flex;gap:10px;flex-wrap:wrap;margin:14px 0">
+<button class="course-btn" id="presGeneratePython">🐍 Сгенерировать Python-код</button>
+<button class="success" id="presGeneratePptx">⬇ Создать презентацию прямо здесь (.pptx)</button>
+<button class="ghost" id="presRefreshPreview">🔄 Обновить предпросмотр</button>
+<button class="ghost" id="presTogglePreview">👁 Показать/скрыть предпросмотр</button>
+</div>
+
+<div id="presStatus" class="status" style="display:none"></div>
+
+<details style="margin:10px 0" id="presPreviewDetails">
+<summary>📋 Предпросмотр структуры слайдов</summary>
+<div id="presPreview" class="presentation-preview"></div>
+</details>
+
+<details style="margin:10px 0" id="presCodeDetails">
+<summary>🐍 Python-код (для запуска локально)</summary>
+<div style="display:flex;gap:8px;margin:8px 0">
+    <button class="ghost xs" id="presCopyPython">📋 Копировать код</button>
+    <button class="ghost xs" id="presDownloadPython">⬇ Скачать .py файл</button>
+    <button class="ghost xs" id="presDownloadData">⬇ Скачать данные (.json)</button>
+</div>
+<div id="presPythonCode" class="python-code" style="display:none"></div>
+<div id="presPythonHint" class="hint-box" style="margin-top:10px">
+<b>📦 Как запустить:</b><br>
+1. Установите зависимости: <code>pip install python-pptx</code><br>
+2. Сохраните код в файл <code>build_presentation.py</code><br>
+3. Сохраните данные в файл <code>course_data.json</code> (кнопка выше)<br>
+4. Положите файл темы рядом (если используете)<br>
+5. Запустите: <code>python build_presentation.py</code><br>
+6. Готовый файл <code>Курс.pptx</code> появится в той же папке
+</div>
+</details>
+</section>
 </main>
 <div class="reset-bar">
 <button class="danger" id="resetBtn">🗑 СБРОСИТЬ ВСЕ ДАННЫЕ</button>
@@ -462,7 +556,13 @@ aiBusy: false, aiModel: 'openai', lastAiError: null
 };
 const courseState = {
 phase: 0, approvedStructure: '', generatedContent: '',
-selectedDocs: new Set(), knowledgeBase: [], viewMode: 'formatted'
+selectedDocs: new Set(), knowledgeBase: [], viewMode: 'formatted',
+slides: [],
+presentationTheme: null,
+presentationThemeBase64: null,
+presentationThemeName: null,
+lastPythonCode: null,
+lastSlidesData: null
 };
 const $ = id => document.getElementById(id);
 const setStatus = (el, msg, type='') => {
@@ -1007,11 +1107,18 @@ $('coursePhase1Result').scrollIntoView({behavior:'smooth', block:'start'});
 } else {
 courseState.generatedContent = result;
 courseState.phase = 2;
+courseState.slides = parseCourseToSlides();   // 🆕 ДОБАВИТЬ
+const contentSlidesCount = courseState.slides.filter(s => s.type === 'content').length;
+$('stCourseSlides').textContent = contentSlidesCount;
 renderCourseContent(result);
 $('coursePhase2Result').style.display = 'block';
 statusEl.className = 'status ok';
-statusEl.innerHTML = `✅ Курс сгенерирован!`;
+statusEl.innerHTML = `✅ Курс сгенерирован! Слайдов: <b>${contentSlidesCount}</b>`;
 $('coursePhase2Result').scrollIntoView({behavior:'smooth', block:'start'});
+$('presentationCard').style.display = 'block';
+document.querySelectorAll('.step')[7].classList.add('done');
+document.querySelectorAll('.step')[8].classList.add('active');
+renderPresentationPreview();
 }
 return result;
 } catch(e) {
@@ -1090,6 +1197,114 @@ div.style.cssText = 'margin:4px 0;line-height:1.6';
 div.textContent = trimmed;
 container.appendChild(div);
 });
+}
+function parseCourseToSlides() {
+    const content = courseState.generatedContent;
+    if (!content) return [];
+    
+    const kb = courseState.knowledgeBase;
+    const lines = content.split('\n');
+    const slides = [];
+    
+    let currentModule = null;
+    let currentSection = null;
+    let currentSlide = null;
+    let slideBuffer = [];
+    
+    function flushSlide() {
+        if (currentSlide && slideBuffer.length > 0) {
+            currentSlide.content = slideBuffer.join('\n').trim();
+            // Ищем привязку к вопросам и НПА по совпадению текста
+            currentSlide.references = findSlideReferences(currentSlide.content, kb);
+            slides.push(currentSlide);
+        }
+        slideBuffer = [];
+    }
+    
+    for (const rawLine of lines) {
+        const line = rawLine.trim();
+        if (!line) continue;
+        
+        // Модуль
+        if (/^#?\s*МОДУЛЬ\s+\d/i.test(line) || /^#?\s*Модуль\s+\d/i.test(line)) {
+            flushSlide();
+            currentSlide = null;
+            currentModule = line.replace(/^#+\s*/, '').trim();
+            // Добавляем разделительный слайд модуля
+            slides.push({
+                type: 'module-divider',
+                title: currentModule,
+                content: '',
+                references: [],
+                module: currentModule
+            });
+            continue;
+        }
+        
+        // Раздел
+        if (/^##?\s*Раздел\s+\d/i.test(line)) {
+            flushSlide();
+            currentSlide = null;
+            currentSection = line.replace(/^#+\s*/, '').trim();
+            continue;
+        }
+        
+        // Слайд
+        if (/^##?\s*Слайд\s+\d/i.test(line) || /^###?\s*Слайд\s+\d/i.test(line)) {
+            flushSlide();
+            currentSlide = {
+                type: 'content',
+                title: line.replace(/^#+\s*/, '').trim(),
+                content: '',
+                references: [],
+                module: currentModule,
+                section: currentSection
+            };
+            continue;
+        }
+        
+        // Контент слайда
+        if (currentSlide) {
+            // Пропускаем разделители
+            if (/^[-─]{3,}$/.test(line)) continue;
+            slideBuffer.push(rawLine);
+        }
+    }
+    flushSlide();
+    
+    return slides;
+}
+
+function findSlideReferences(slideContent, kb) {
+    if (!slideContent || !kb || kb.length === 0) return [];
+    const refs = [];
+    const seen = new Set();
+    const contentLower = slideContent.toLowerCase();
+    
+    for (const entry of kb) {
+        if (!entry.pointText) continue;
+        // Ищем совпадения текста пункта НПА со слайдом
+        const pointTextClean = entry.pointText.replace(/\s+/g, ' ').trim().toLowerCase();
+        // Берём значимые фрагменты (минимум 40 символов)
+        if (pointTextClean.length < 40) continue;
+        
+        // Проверяем вхождение подстроки (берём первые 80 символов пункта)
+        const chunk = pointTextClean.slice(0, Math.min(120, pointTextClean.length));
+        if (contentLower.includes(chunk)) {
+            const key = `${entry.docName}|${entry.pointRaw}|${entry.questionNum}`;
+            if (!seen.has(key)) {
+                seen.add(key);
+                refs.push({
+                    docName: entry.docName,
+                    pointRaw: entry.pointRaw,
+                    questionNum: entry.questionNum,
+                    questionText: entry.questionText,
+                    pointText: entry.pointText
+                });
+            }
+        }
+    }
+    return refs;
 }
 function renderCourseDocsSelector(){
 const container = $('courseDocsSelector');
@@ -2818,12 +3033,18 @@ courseState.selectedDocs.clear();
 courseState.knowledgeBase = [];
 ['stQ','stW','stGroups','stM','stNpa','stUniqueNpa','stRegistryFilled','stSorted','stLaws','stAiFound','stCourseSlides'].forEach(id => $(id).textContent = '0');
 ['excelName','wordName'].forEach(id => $(id).textContent = id==='excelName'?'Данные не загружены':'Файл не выбран');
+courseState.slides = [];
+courseState.presentationTheme = null;
+courseState.presentationThemeBase64 = null;
+courseState.presentationThemeName = null;
+courseState.lastPythonCode = null;
+courseState.lastSlidesData = null;
 $('excelDrop').classList.remove('loaded');
 $('wordDrop').classList.remove('loaded');
 $('colSelect').innerHTML = '<option>— загрузите файл —</option>';
 $('colSelect').disabled = true;
 ['excelStatus','mappingStatus','exportStatus','exportSortStatus','courseStatus'].forEach(id => $(id).style.display='none');
-['wordDebugCard','resultsCard','npaRegistryCard','finalCard','sortCard','courseCard','coursePhase1Result','coursePhase2Result'].forEach(id => $(id).style.display='none');
+['wordDebugCard','resultsCard','npaRegistryCard','finalCard','sortCard','courseCard','coursePhase1Result','coursePhase2Result','presentationCard'].forEach(id => $(id).style.display='none');
 $('runMapping').disabled = true;
 $('courseConfirmPhase2').disabled = true;
 $('excelFile').value = ''; $('wordFile').value = '';
@@ -2831,20 +3052,664 @@ $('courseTopic').value = '';
 $('coursePromptPreview').value = '';
 $('courseStructureEditor').value = '';
 $('courseContentOutput').innerHTML = '';
+courseState.slides = [];
+courseState.presentationTheme = null;
+courseState.presentationThemeBase64 = null;
+courseState.presentationThemeName = null;
+courseState.lastPythonCode = null;
+courseState.lastSlidesData = null;
+if($('presPythonCode')) { $('presPythonCode').style.display = 'none'; $('presPythonCode').textContent = ''; }
+if($('presPreview')) $('presPreview').innerHTML = '';
+if($('presStatus')) $('presStatus').style.display = 'none';
+if($('themeName')) $('themeName').textContent = 'Без темы — будет использовано стандартное оформление';
+if($('themeDrop')) $('themeDrop').classList.remove('loaded');
+if($('themeFile')) $('themeFile').value = '';
 document.querySelectorAll('.step').forEach((s,i) => {
 s.classList.remove('done');
 if(i===0) s.classList.add('active'); else s.classList.remove('active');
 });
-});
+});   // ← ЗАКРЫВАЕМ resetBtn
+
 ['excelDrop','wordDrop'].forEach(id => {
 const el = $(id);
 el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('over'); });
 el.addEventListener('dragleave', () => el.classList.remove('over'));
 el.addEventListener('drop', e => { e.preventDefault(); el.classList.remove('over'); });
 });
+
 window.addEventListener('load', () => {
 setTimeout(initAiStatus, 500);
 });
+$('themeFile').addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    $('themeName').textContent = file.name;
+    $('themeDrop').classList.add('loaded');
+    courseState.presentationTheme = file.name;
+    
+    // Читаем файл как base64 для встраивания в Python-код
+    const reader = new FileReader();
+    reader.onload = ev => {
+        courseState.presentationThemeBase64 = ev.target.result.split(',')[1];
+        courseState.presentationThemeName = file.name;
+    };
+    reader.readAsDataURL(file);
+});
+
+['themeDrop'].forEach(id => {
+    const el = $(id);
+    el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('over'); });
+    el.addEventListener('dragleave', () => el.classList.remove('over'));
+    el.addEventListener('drop', e => {
+        e.preventDefault(); el.classList.remove('over');
+        const file = e.dataTransfer.files[0];
+        if (file) {
+            $('themeFile').files = e.dataTransfer.files;
+            $('themeFile').dispatchEvent(new Event('change'));
+        }
+    });
+});
+function renderPresentationPreview() {
+    const slides = courseState.slides || [];
+    const container = $('presPreview');
+    
+    const dividers = slides.filter(s => s.type === 'module-divider').length;
+    const content = slides.filter(s => s.type === 'content').length;
+    const withRefs = slides.filter(s => s.references && s.references.length > 0).length;
+    
+    $('presTotalSlides').textContent = slides.length;
+    $('presDividers').textContent = dividers;
+    $('presContent').textContent = content;
+    $('presWithRefs').textContent = withRefs;
+    
+    if (slides.length === 0) {
+        container.innerHTML = '<div style="color:var(--muted);padding:20px;text-align:center">Сначала сгенерируйте курс на шаге 8</div>';
+        return;
+    }
+    
+    let html = '';
+    let slideNum = 0;
+    slides.forEach(slide => {
+        slideNum++;
+        if (slide.type === 'module-divider') {
+            html += `<div class="slide-card divider">`;
+            html += `<span class="slide-num">#${slideNum}</span>`;
+            html += `<span class="slide-title">📘 ${escapeHtml(slide.title)}</span>`;
+            html += `<div style="font-size:11px;color:var(--muted);margin-top:4px">Разделительный слайд модуля</div>`;
+            html += `</div>`;
+        } else {
+            html += `<div class="slide-card">`;
+            html += `<span class="slide-num">#${slideNum}</span>`;
+            html += `<span class="slide-title">${escapeHtml(slide.title)}</span>`;
+            html += `<div class="slide-content">${escapeHtml((slide.content || '').slice(0, 400))}${(slide.content || '').length > 400 ? '…' : ''}</div>`;
+            if (slide.references && slide.references.length > 0) {
+                html += `<div class="slide-refs">`;
+                slide.references.slice(0, 5).forEach(ref => {
+                    html += `<div class="ref-item">📜 ${escapeHtml(ref.docName)} · ${escapeHtml(ref.pointRaw)} · Вопрос №${ref.questionNum}</div>`;
+                });
+                if (slide.references.length > 5) {
+                    html += `<div style="color:var(--muted);font-size:10px;margin-top:4px">…и ещё ${slide.references.length - 5}</div>`;
+                }
+                html += `</div>`;
+            } else {
+                html += `<div style="font-size:11px;color:var(--warn);margin-top:4px">⚠ Нет привязки к НПА</div>`;
+            }
+            html += `</div>`;
+        }
+    });
+    container.innerHTML = html;
+}
+
+$('presRefreshPreview').onclick = () => {
+    if (!courseState.generatedContent) {
+        alert('Сначала сгенерируйте курс');
+        return;
+    }
+    courseState.slides = parseCourseToSlides();
+    renderPresentationPreview();
+};
+
+$('presTogglePreview').onclick = () => {
+    const det = $('presPreviewDetails');
+    det.open = !det.open;
+};
+function generatePythonCode() {
+    const slides = courseState.slides || [];
+    if (slides.length === 0) throw new Error('Нет слайдов. Сначала сгенерируйте курс.');
+    
+    const titleSize = +$('presTitleSize').value || 28;
+    const textSize = +$('presTextSize').value || 16;
+    const addNotes = $('presAddNotes').checked;
+    const themeName = courseState.presentationThemeName || 'theme.pptx';
+    const topic = $('courseTopic').value.trim() || 'Обучающий курс';
+    
+    // Собираем данные слайдов как JSON
+    const slidesData = slides.map((s, i) => ({
+        index: i + 1,
+        type: s.type,
+        title: s.title || '',
+        content: s.content || '',
+        module: s.module || '',
+        section: s.section || '',
+        references: (s.references || []).map(r => ({
+            docName: r.docName,
+            pointRaw: r.pointRaw,
+            questionNum: r.questionNum,
+            questionText: r.questionText
+        }))
+    }));
+      const slidesJson = JSON.stringify(slidesData)
+    .replace(/\\/g, '\\\\')
+    .replace(/`/g, '\\`')
+    .replace(/\$/g, '\\$')
+    .replace(/\n/g, '\\n')
+    .replace(/\r/g, '\\r')
+    .replace(/\t/g, '\\t');
+    const pythonCode = `#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Автоматическая генерация презентации курса
+Сгенерировано в AI Course Builder Workstation
+Тема: ${topic.replace(/"/g, '\\"')}
+"""
+
+import json
+import sys
+from pathlib import Path
+from pptx import Presentation
+from pptx.util import Inches, Pt, Emu
+from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
+from pptx.dml.color import RGBColor
+
+# ═══════════════════════════════════════════════════════════════
+# НАСТРОЙКИ
+# ═══════════════════════════════════════════════════════════════
+THEME_FILE = "${themeName}"  # Файл темы (.pptx или .potx)
+DATA_FILE = "course_data.json"  # Файл с данными слайдов
+OUTPUT_FILE = "Курс_${topic.replace(/[^a-zA-Zа-яА-Я0-9\s]/g, '_').slice(0, 50).replace(/\s+/g, '_')}.pptx"
+
+TITLE_SIZE = Pt(${titleSize})
+TEXT_SIZE = Pt(${textSize})
+NOTES_SIZE = Pt(10)
+ADD_NOTES = ${addNotes ? 'True' : 'False'}
+
+# ═══════════════════════════════════════════════════════════════
+# ДАННЫЕ СЛАЙДОВ (автоматически сгенерированы)
+# ═══════════════════════════════════════════════════════════════
+SLIDES_DATA = """${slidesJson}"""
+
+def load_slides_data():
+    """Загрузка данных слайдов из JSON"""
+    try:
+        return json.loads(SLIDES_DATA)
+    except Exception as e:
+        print(f"Ошибка загрузки данных: {e}")
+        # Пробуем загрузить из файла
+        try:
+            with open(DATA_FILE, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except Exception as e2:
+            print(f"Не удалось загрузить {DATA_FILE}: {e2}")
+            sys.exit(1)
+
+def find_layout(prs, layout_name_keywords):
+    """Поиск layout'а по ключевым словам в имени"""
+    for layout in prs.slide_layouts:
+        name = layout.name.lower()
+        for kw in layout_name_keywords:
+            if kw in name:
+                return layout
+    # Fallback: возвращаем первый доступный
+    return prs.slide_layouts[0] if prs.slide_layouts else None
+
+def add_title_slide(prs, title, subtitle=""):
+    """Добавление титульного слайда"""
+    # Ищем layout для титульного слайда
+    layout = find_layout(prs, ['title slide', 'титул', 'title'])
+    slide = prs.slides.add_slide(layout)
+    
+    if slide.shapes.title:
+        slide.shapes.title.text = title
+    if len(slide.placeholders) > 1:
+        try:
+            slide.placeholders[1].text = subtitle
+        except:
+            pass
+    return slide
+
+def add_divider_slide(prs, title, module_name=""):
+    """Добавление разделительного слайда модуля"""
+    # Ищем layout для заголовка раздела
+    layout = find_layout(prs, ['section', 'раздел', 'title only', 'заголовок'])
+    slide = prs.slides.add_slide(layout)
+    
+    if slide.shapes.title:
+        slide.shapes.title.text = title
+    elif slide.placeholders:
+        try:
+            slide.placeholders[0].text = title
+        except:
+            pass
+    
+    if ADD_NOTES and module_name:
+        notes = slide.notes_slide.notes_text_frame
+        notes.text = f"Раздел: {module_name}"
+    
+    return slide
+
+def split_content_to_chunks(text, max_chars=1200):
+    """Разбиение длинного текста на части для слайдов"""
+    if len(text) <= max_chars:
+        return [text]
+    
+    chunks = []
+    lines = text.split('\\n')
+    current_chunk = []
+    current_len = 0
+    
+    for line in lines:
+        line_len = len(line)
+        if current_len + line_len > max_chars and current_chunk:
+            chunks.append('\\n'.join(current_chunk))
+            current_chunk = [line]
+            current_len = line_len
+        else:
+            current_chunk.append(line)
+            current_len += line_len
+    
+    if current_chunk:
+        chunks.append('\\n'.join(current_chunk))
+    
+    return chunks if chunks else [text]
+
+def add_content_slide(prs, title, content, references, slide_num):
+    """Добавление содержательного слайда"""
+    # Разбиваем контент на части, если он слишком длинный
+    chunks = split_content_to_chunks(content)
+    slides_created = []
+    
+    for i, chunk in enumerate(chunks):
+        # Ищем layout с заголовком и контентом
+        layout = find_layout(prs, ['title and content', 'заголовок и контент', 'two content', 'content'])
+        slide = prs.slides.add_slide(layout)
+        
+        # Заголовок
+        slide_title = title
+        if len(chunks) > 1:
+            slide_title = f"{title} (часть {i+1}/{len(chunks)})"
+        
+        if slide.shapes.title:
+            slide.shapes.title.text = slide_title
+            # Устанавливаем размер шрифта заголовка
+            for para in slide.shapes.title.text_frame.paragraphs:
+                for run in para.runs:
+                    run.font.size = TITLE_SIZE
+        
+        # Контент
+        content_placeholder = None
+        if len(slide.placeholders) > 1:
+            content_placeholder = slide.placeholders[1]
+        elif len(slide.placeholders) > 0:
+            content_placeholder = slide.placeholders[0]
+        
+        if content_placeholder:
+            tf = content_placeholder.text_frame
+            tf.clear()
+            tf.word_wrap = True
+            
+            lines = chunk.split('\\n')
+            first_line = True
+            for line in lines:
+                if first_line:
+                    p = tf.paragraphs[0]
+                    first_line = False
+                else:
+                    p = tf.add_paragraph()
+                
+                p.text = line
+                p.font.size = TEXT_SIZE
+                p.alignment = PP_ALIGN.LEFT
+                
+                # Сохраняем форматирование НПА (моноширинный шрифт для цитат)
+                if line.startswith('>') or line.startswith('"') or line.startswith('«'):
+                    for run in p.runs:
+                        run.font.italic = True
+                        try:
+                            run.font.color.rgb = RGBColor(0x82, 0x50, 0xDF)
+                        except:
+                            pass
+        
+        # Заметки к слайду
+        if ADD_NOTES:
+            notes_slide = slide.notes_slide
+            notes_tf = notes_slide.notes_text_frame
+            notes_tf.clear()
+            
+            # Добавляем информацию о вопросе и НПА
+            if references:
+                p = notes_tf.paragraphs[0]
+                p.text = f"═══ Слайд {slide_num} ═══"
+                p.font.size = NOTES_SIZE
+                p.font.bold = True
+                
+                for ref in references:
+                    p = notes_tf.add_paragraph()
+                    p.text = f"\\n📜 НПА: {ref['docName']}"
+                    p.font.size = NOTES_SIZE
+                    
+                    p = notes_tf.add_paragraph()
+                    p.text = f"📍 Пункт: {ref['pointRaw']}"
+                    p.font.size = NOTES_SIZE
+                    
+                    p = notes_tf.add_paragraph()
+                    p.text = f"❓ Вопрос №{ref['questionNum']}: {ref['questionText']}"
+                    p.font.size = NOTES_SIZE
+            else:
+                p = notes_tf.paragraphs[0]
+                p.text = f"Слайд {slide_num} — {title}"
+                p.font.size = NOTES_SIZE
+        
+        slides_created.append(slide)
+    
+    return slides_created
+
+def main():
+    print("🎨 Загрузка темы оформления...")
+    
+    # Загружаем презентацию с темой
+    theme_path = Path(THEME_FILE)
+    if theme_path.exists():
+        prs = Presentation(THEME_FILE)
+        print(f"✅ Тема загружена: {THEME_FILE}")
+        print(f"   Доступно layout'ов: {len(prs.slide_layouts)}")
+        for i, layout in enumerate(prs.slide_layouts):
+            print(f"   [{i}] {layout.name}")
+    else:
+        print(f"⚠ Тема {THEME_FILE} не найдена, используется стандартная")
+        prs = Presentation()
+    
+    print("\\n📋 Загрузка данных слайдов...")
+    slides_data = load_slides_data()
+    print(f"✅ Загружено {len(slides_data)} слайдов")
+    
+    print("\\n🎬 Генерация презентации...")
+    
+    # Титульный слайд
+    topic = "${topic.replace(/"/g, '\\"')}"
+    add_title_slide(prs, topic, f"Дата: {__import__('datetime').date.today().strftime('%d.%m.%Y')}")
+    print("  ✓ Титульный слайд")
+    
+    # Обрабатываем все слайды
+    content_slide_num = 0
+    for slide_data in slides_data:
+        slide_type = slide_data.get('type', 'content')
+        
+        if slide_type == 'module-divider':
+            add_divider_slide(prs, slide_data['title'], slide_data.get('module', ''))
+            print(f"  ✓ Разделитель: {slide_data['title']}")
+        else:
+            content_slide_num += 1
+            refs = slide_data.get('references', [])
+            created = add_content_slide(
+                prs, 
+                slide_data['title'], 
+                slide_data['content'], 
+                refs,
+                content_slide_num
+            )
+            print(f"  ✓ Слайд #{content_slide_num}: {slide_data['title'][:50]}{'...' if len(slide_data['title']) > 50 else ''} ({len(created)} физ. слайдов)")
+    
+    print(f"\\n💾 Сохранение в {OUTPUT_FILE}...")
+    prs.save(OUTPUT_FILE)
+    print(f"✅ Готово! Создано {len(prs.slides)} слайдов")
+    print(f"📁 Файл: {OUTPUT_FILE}")
+
+if __name__ == '__main__':
+    main()
+`;
+    
+    return { pythonCode, slidesData: slidesData };
+}
+
+$('presGeneratePython').onclick = () => {
+    const statusEl = $('presStatus');
+    try {
+        if (!courseState.generatedContent) {
+            throw new Error('Сначала сгенерируйте курс на шаге 8');
+        }
+        if (!courseState.slides || courseState.slides.length === 0) {
+            courseState.slides = parseCourseToSlides();
+        }
+        
+        const { pythonCode, slidesData } = generatePythonCode();
+        
+        const codeEl = $('presPythonCode');
+        codeEl.textContent = pythonCode;
+        codeEl.style.display = 'block';
+        $('presCodeDetails').open = true;
+        
+        // Сохраняем для копирования/скачивания
+        courseState.lastPythonCode = pythonCode;
+        courseState.lastSlidesData = slidesData;
+        
+        statusEl.style.display = 'block';
+        statusEl.className = 'status ok';
+        statusEl.innerHTML = `✅ Python-код сгенерирован! Слайдов: <b>${courseState.slides.length}</b>. Скопируйте код и данные, запустите локально.`;
+    } catch(e) {
+        statusEl.style.display = 'block';
+        statusEl.className = 'status err';
+        statusEl.innerHTML = `❌ Ошибка: ${escapeHtml(e.message)}`;
+    }
+};
+
+$('presCopyPython').onclick = async () => {
+    if (!courseState.lastPythonCode) {
+        alert('Сначала сгенерируйте код');
+        return;
+    }
+    try {
+        await navigator.clipboard.writeText(courseState.lastPythonCode);
+        const btn = $('presCopyPython');
+        const orig = btn.textContent;
+        btn.textContent = '✓ Скопировано!';
+        setTimeout(() => btn.textContent = orig, 1500);
+    } catch(e) { alert('Ошибка: ' + e.message); }
+};
+
+$('presDownloadPython').onclick = () => {
+    if (!courseState.lastPythonCode) {
+        alert('Сначала сгенерируйте код');
+        return;
+    }
+    const blob = new Blob([courseState.lastPythonCode], {type:'text/x-python;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'build_presentation.py';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
+};
+
+$('presDownloadData').onclick = () => {
+    if (!courseState.lastSlidesData) {
+        alert('Сначала сгенерируйте код');
+        return;
+    }
+    const blob = new Blob([JSON.stringify(courseState.lastSlidesData, null, 2)], {type:'application/json;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'course_data.json';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
+};
+$('presGeneratePptx').onclick = async () => {
+    const statusEl = $('presStatus');
+    statusEl.style.display = 'block';
+    statusEl.className = 'status';
+    statusEl.innerHTML = '<span class="loader course"></span>Генерация презентации...';
+    
+    try {
+        if (typeof PptxGenJS === 'undefined') {
+            throw new Error('Библиотека PptxGenJS не загружена');
+        }
+        if (!courseState.generatedContent) {
+            throw new Error('Сначала сгенерируйте курс на шаге 8');
+        }
+        if (!courseState.slides || courseState.slides.length === 0) {
+            courseState.slides = parseCourseToSlides();
+        }
+        
+        const pptx = new PptxGenJS();
+        pptx.layout = 'LAYOUT_WIDE';
+        pptx.author = 'AI Course Builder';
+        pptx.title = $('courseTopic').value.trim() || 'Обучающий курс';
+        
+        const titleSize = +$('presTitleSize').value || 28;
+        const textSize = +$('presTextSize').value || 16;
+        const addNotes = $('presAddNotes').checked;
+        
+        // Цветовая схема
+        const colors = {
+            title: '0550AE',
+            moduleTitle: '1A7F37',
+            text: '1F2328',
+            accent: '8250DF',
+            dividerBg: 'DDF4FF',
+            contentBg: 'FFFFFF'
+        };
+        
+        // Титульный слайд
+        let slide = pptx.addSlide();
+        slide.background = { color: 'F6F8FA' };
+        slide.addText($('courseTopic').value.trim() || 'Обучающий курс', {
+            x: 0.5, y: 2, w: 9, h: 1.5,
+            fontSize: 40, bold: true, color: colors.title,
+            align: 'center', fontFace: 'Arial'
+        });
+        slide.addText(`Дата: ${new Date().toLocaleDateString('ru-RU')}`, {
+            x: 0.5, y: 4, w: 9, h: 0.5,
+            fontSize: 16, color: '656D76', align: 'center'
+        });
+        
+        let contentSlideNum = 0;
+        
+        courseState.slides.forEach(slideData => {
+            if (slideData.type === 'module-divider') {
+                // Разделительный слайд модуля
+                slide = pptx.addSlide();
+                slide.background = { color: colors.dividerBg };
+                slide.addText(slideData.title, {
+                    x: 0.5, y: 2.5, w: 9, h: 2,
+                    fontSize: 36, bold: true, color: colors.moduleTitle,
+                    align: 'center', fontFace: 'Arial'
+                });
+                if (addNotes) {
+                    slide.addNotes(`Раздел: ${slideData.module || slideData.title}`);
+                }
+            } else {
+                contentSlideNum++;
+                // Разбиваем длинный контент
+                const chunks = splitContentForPptx(slideData.content || '', 1200);
+                
+                chunks.forEach((chunk, chunkIdx) => {
+                    slide = pptx.addSlide();
+                    slide.background = { color: colors.contentBg };
+                    
+                    let slideTitle = slideData.title;
+                    if (chunks.length > 1) {
+                        slideTitle = `${slideData.title} (${chunkIdx + 1}/${chunks.length})`;
+                    }
+                    
+                    // Заголовок
+                    slide.addText(slideTitle, {
+                        x: 0.5, y: 0.3, w: 9, h: 0.8,
+                        fontSize: titleSize, bold: true, color: colors.title,
+                        fontFace: 'Arial', valign: 'middle'
+                    });
+                    
+                    // Разделитель
+                    slide.addShape(pptx.ShapeType.line, {
+                        x: 0.5, y: 1.15, w: 9, h: 0,
+                        line: { color: 'D0D7DE', width: 1 }
+                    });
+                    
+                    // Контент
+                    const textRows = chunk.split('\n').map(line => {
+                        const isQuote = line.startsWith('>') || line.startsWith('"') || line.startsWith('«');
+                        return {
+                            text: line + '\n',
+                            options: {
+                                fontSize: textSize,
+                                color: isQuote ? colors.accent : colors.text,
+                                italic: isQuote,
+                                fontFace: isQuote ? 'Consolas' : 'Arial',
+                                bullet: false,
+                                breakLine: true
+                            }
+                        };
+                    });
+                    
+                    slide.addText(textRows, {
+                        x: 0.5, y: 1.3, w: 9, h: 5.5,
+                        valign: 'top', wrap: true, paraSpaceAfter: 6
+                    });
+                    
+                    // Заметки
+                    if (addNotes) {
+                        let notesText = `═══ Слайд ${contentSlideNum} ═══\n`;
+                        if (slideData.references && slideData.references.length > 0) {
+                            slideData.references.forEach(ref => {
+                                notesText += `\n📜 НПА: ${ref.docName}\n`;
+                                notesText += `📍 Пункт: ${ref.pointRaw}\n`;
+                                notesText += `❓ Вопрос №${ref.questionNum}: ${ref.questionText}\n`;
+                            });
+                        } else {
+                            notesText += `\n${slideData.title}`;
+                        }
+                        slide.addNotes(notesText);
+                    }
+                });
+            }
+        });
+        
+        const topic = $('courseTopic').value.trim() || 'Курс';
+        const fileName = `Курс_${topic.slice(0, 50).replace(/[\\/:*?"<>|]/g, '_')}.pptx`;
+        
+        await pptx.writeFile({ fileName });
+        
+        statusEl.className = 'status ok';
+        statusEl.innerHTML = `✅ Презентация создана! Слайдов: <b>${pptx.slides.length}</b>. Файл: <b>${escapeHtml(fileName)}</b>`;
+        
+    } catch(e) {
+        console.error(e);
+        statusEl.className = 'status err';
+        statusEl.innerHTML = `❌ Ошибка: ${escapeHtml(e.message)}`;
+    }
+};
+
+function splitContentForPptx(text, maxChars) {
+    if (!text || text.length <= maxChars) return [text || ''];
+    const chunks = [];
+    const lines = text.split('\n');
+    let current = [];
+    let currentLen = 0;
+    
+    for (const line of lines) {
+        if (currentLen + line.length > maxChars && current.length > 0) {
+            chunks.push(current.join('\n'));
+            current = [line];
+            currentLen = line.length;
+        } else {
+            current.push(line);
+            currentLen += line.length;
+        }
+    }
+    if (current.length > 0) chunks.push(current.join('\n'));
+    return chunks.length > 0 ? chunks : [''];
+}
 </script>
 </body>
 </html>
